@@ -10,19 +10,18 @@ check_root
 log_section "Installing AUR Helper (paru)"
 
 MOUNT_ROOT="${MOUNT_POINT_ROOT}"
-AUR_DIR="/tmp/paru"
-AUR_BIN="/usr/local/bin/paru"
 
 log_step "Installing base-devel if not present..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm base-devel
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm base-devel git
 
-log_step "Cloning paru..."
-rm -rf "$AUR_DIR"
-git clone https://aur.archlinux.org/paru.git "$AUR_DIR"
-
-log_step "Building paru..."
-cd "$AUR_DIR"
-arch-chroot "$MOUNT_ROOT" /bin/bash -c "cd /tmp/paru && makepkg -si --noconfirm"
+log_step "Cloning and building paru..."
+arch-chroot "$MOUNT_ROOT" /bin/bash -c '
+    cd /tmp
+    rm -rf paru
+    git clone https://aur.archlinux.org/paru.git
+    cd paru
+    makepkg -si --noconfirm
+'
 
 log_step "Configuring paru..."
 mkdir -p "$MOUNT_ROOT/etc/paru"
