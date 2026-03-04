@@ -20,21 +20,21 @@ log_step "Installing Limine..."
 arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine
 
 log_step "Configuring Limine..."
-cat > "$MOUNT_ROOT/boot/limine.cfg" <<'EOF'
+ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
+ESP_PART="${MOUNT_ROOT}/boot"
+
+cat > "$ESP_PART/limine.cfg" <<EOF
 TIMEOUT=5
 
 :Arch Linux
     PROTOCOL=limine
     KERNEL_PATH=boot:///vmlinuz-linux
     INITRD_PATH=boot:///intel-ucode.img
-    CMDLINE=quiet loglevel=3
+    CMDLINE=quiet loglevel=3 cryptdevice=UUID=$ROOT_UUID:cryptroot root=/dev/mapper/cryptroot
     MODULE_PATH=boot:///initramfs-linux.img
 EOF
 
-ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
-sed -i "s|cmdline=quiet|cmdline=quiet cryptdevice=UUID=$ROOT_UUID:cryptroot root=/dev/mapper/cryptroot|" "$MOUNT_ROOT/boot/limine.cfg"
-
 log_step "Installing Limine to ESP..."
-limine-install --install-only || limine-install
+arch-chroot "$MOUNT_ROOT" limine-install /boot
 
 log_success "Limine bootloader installed!"
