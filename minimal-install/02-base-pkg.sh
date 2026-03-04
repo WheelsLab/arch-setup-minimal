@@ -31,8 +31,25 @@ PACKAGES=(
     reflector
 )
 
-log_step "Running pacstrap..."
-pacstrap -K "${MOUNT_ROOT}" "${PACKAGES[@]}"
+MAX_RETRIES=3
+RETRY_COUNT=0
+
+log_step "Running pacstrap with retry..."
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+    if pacstrap -K "${MOUNT_ROOT}" "${PACKAGES[@]}"; then
+        log_success "Base packages installed!"
+        break
+    else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; then
+            log_warn "pacstrap failed. Retrying ($RETRY_COUNT/$MAX_RETRIES) in 5 seconds..."
+            sleep 5
+        else
+            log_error "pacstrap failed after $MAX_RETRIES attempts"
+            exit 1
+        fi
+    fi
+done
 
 log_step "Generating fstab..."
 if is_uefi; then
