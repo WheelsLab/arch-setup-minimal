@@ -36,6 +36,17 @@ read -rp "Enter username for encryption keyfile (optional, press Enter to skip):
 
 log_section "Configuring"
 
+log_step "Checking for existing mounts..."
+if mountpoint -q "$MOUNT_POINT_ROOT" 2>/dev/null; then
+    log_warn "Unmounting existing mounts on $MOUNT_POINT_ROOT..."
+    umount -R "$MOUNT_POINT_ROOT" 2>/dev/null || true
+fi
+
+if cryptsetup isActive "$LUKS_CONTAINER_NAME" 2>/dev/null; then
+    log_warn "Closing existing LUKS container..."
+    cryptsetup close "$LUKS_CONTAINER_NAME" 2>/dev/null || true
+fi
+
 ESP_SIZE="512M"
 CRYPT_NAME="${LUKS_CONTAINER_NAME}"
 BTRFS_LABEL="archsystem"
