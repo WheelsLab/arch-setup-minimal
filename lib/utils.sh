@@ -2,12 +2,6 @@
 
 # Utility functions for Arch Linux minimal setup
 
-# Source library files
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for lib in "$SCRIPT_DIR"/*.sh; do
-    [[ -f "$lib" ]] && source "$lib"
-done
-
 check_root() {
     if [[ $EUID -ne 0 ]]; then
         log_error "This script must be run as root"
