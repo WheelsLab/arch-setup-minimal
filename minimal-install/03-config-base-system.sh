@@ -27,8 +27,14 @@ read -rp "Enter hostname [archlinux]: " HOSTNAME
 HOSTNAME="${HOSTNAME:-archlinux}"
 echo "$HOSTNAME" > "$MOUNT_ROOT/etc/hostname"
 
-log_step "Configuring mkinitcpio..."
+log_step "Configuring vconsole..."
+echo "KEYMAP=us" > "$MOUNT_ROOT/etc/vconsole.conf"
+echo "FONT=ter-v16n" >> "$MOUNT_ROOT/etc/vconsole.conf"
+
+log_step "Configuring mkinitcpio for LUKS..."
 sed -i 's/HOOKS=(base udev)/HOOKS=(base udev autodetect microcode modconf block encrypt filesystems keyboard fsck)/' "$MOUNT_ROOT/etc/mkinitcpio.conf"
+
+log_step "Regenerating initramfs..."
 arch-chroot "$MOUNT_ROOT" mkinitcpio -P
 
 log_step "Setting root password..."
