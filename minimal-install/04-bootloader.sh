@@ -35,6 +35,7 @@ TIMEOUT=5
 EOF
 
 log_step "Installing Limine to ESP..."
-arch-chroot "$MOUNT_ROOT" limine bios-install /boot
+ESP_DEVICE=$(lsblk -no pkname /dev/mapper/cryptroot 2>/dev/null || lsblk -no pkname /dev/vda2)
+arch-chroot "$MOUNT_ROOT" limine bios-install "/dev/$ESP_DEVICE"
 
 log_success "Limine bootloader installed!"
