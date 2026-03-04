@@ -17,7 +17,6 @@ sudo pacman -S --noconfirm \
     xorg-xinit \
     wayland \
     wayland-protocols \
-    wlroots \
     seatd
 
 log_step "Installing Niri and related packages..."
@@ -31,9 +30,7 @@ sudo pacman -S --noconfirm \
     libegl1 \
     libglvnd \
     libinput \
-    libudev \
-    hikari \
-    cage
+    libudev
 
 log_step "Installing terminal and shell..."
 sudo pacman -S --noconfirm \
@@ -41,7 +38,9 @@ sudo pacman -S --noconfirm \
     foot \
     starship \
     zsh \
-    zsh-completions
+    zsh-completions \
+    eza \
+    bat
 
 log_step "Installing font packages..."
 sudo pacman -S --noconfirm \
@@ -67,7 +66,6 @@ sudo pacman -S --noconfirm \
     bluez-utils \
     cups \
     cups-pdf \
-    printer-utility \
     thermald
 
 log_step "Installing Chinese input method..."
