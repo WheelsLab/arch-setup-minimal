@@ -19,6 +19,11 @@ fi
 log_step "Installing Limine..."
 arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine
 
+log_step "Deploying Limine UEFI..."
+EFI_DIR="$MOUNT_ROOT/boot/EFI/arch-limine"
+mkdir -p "$EFI_DIR"
+cp /usr/share/limine/BOOTX64.EFI "$EFI_DIR/"
+
 log_step "Configuring Limine..."
 ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
 
@@ -33,7 +38,7 @@ TIMEOUT=5
     MODULE_PATH=boot:///initramfs-linux.img
 EOF
 
-log_step "Limine configured!"
-log_info "Note: Run 'limine bios-install /dev/vda' after reboot for BIOS boot"
-log_info "Or use UEFI boot (recommended for VM)"
-log_success "Limine bootloader configured!"
+log_step "Creating UEFI boot entry..."
+arch-chroot "$MOUNT_ROOT" efibootmgr --create --disk /dev/vda --part 1 --label "Arch Linux Limine" --loader '\EFI\arch-limine\BOOTX64.EFI'
+
+log_success "Limine bootloader installed!"
