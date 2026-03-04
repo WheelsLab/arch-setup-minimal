@@ -42,10 +42,13 @@ if mountpoint -q "$MOUNT_POINT_ROOT" 2>/dev/null; then
     umount -R "$MOUNT_POINT_ROOT" 2>/dev/null || true
 fi
 
-if cryptsetup isActive "$LUKS_CONTAINER_NAME" 2>/dev/null; then
-    log_warn "Closing existing LUKS container..."
-    cryptsetup close "$LUKS_CONTAINER_NAME" 2>/dev/null || true
-fi
+log_step "Closing any active LUKS containers..."
+for mapper in /dev/mapper/crypt*; do
+    [[ -e "$mapper" ]] && cryptsetup close "$mapper" 2>/dev/null && log_info "Closed $mapper"
+done
+
+log_step "Refreshing partition table..."
+partprobe "$DISK" 2>/dev/null || true
 
 ESP_SIZE="512M"
 CRYPT_NAME="${LUKS_CONTAINER_NAME}"
