@@ -35,6 +35,6 @@ TIMEOUT=5
 EOF
 
 log_step "Installing Limine to ESP..."
-arch-chroot "$MOUNT_ROOT" limine-install /boot
+arch-chroot "$MOUNT_ROOT" limine bios-install /boot
 
 log_success "Limine bootloader installed!"
