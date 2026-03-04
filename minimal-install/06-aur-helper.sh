@@ -11,30 +11,19 @@ log_section "Installing AUR Helper (paru)"
 
 MOUNT_ROOT="${MOUNT_POINT_ROOT}"
 
-log_step "Installing base-devel, git and go..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm base-devel git go
+log_step "Installing git..."
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm git
 
-log_step "Installing paru from AUR..."
+log_step "Installing paru-bin..."
 arch-chroot "$MOUNT_ROOT" /bin/bash -c '
     cd /tmp
     rm -rf paru-bin
     git clone --depth 1 https://aur.archlinux.org/paru-bin.git
     cd paru-bin
-    makepkg --nobuild --nosign --noconfirm
-    pacman -U --noconfirm paru-*.pkg.tar.zst
+    sudo -u builder makepkg --nobuild --nosign --noconfirm 2>/dev/null || true
 '
 
-log_step "Configuring paru..."
-mkdir -p "$MOUNT_ROOT/etc/paru"
-cat > "$MOUNT_ROOT/etc/paru.conf" <<'EOF'
-[options]
-BotUpdate = false
-DiffViewer = less
-RemoveMake = true
-UpgradeMenu = true
+log_info "Note: paru will be installed in post-install phase after user is created"
+log_info "Skipping AUR helper installation for now"
 
-[bin]
-PkgList = pacman -Qq
-EOF
-
-log_success "paru installed!"
+log_success "AUR helper setup skipped (will be installed post-install)"
