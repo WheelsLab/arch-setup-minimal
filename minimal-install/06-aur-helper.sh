@@ -11,16 +11,19 @@ log_section "Installing AUR Helper (paru)"
 
 MOUNT_ROOT="${MOUNT_POINT_ROOT}"
 
-log_step "Installing base-devel if not present..."
+log_step "Installing base-devel and git..."
 arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm base-devel git
 
-log_step "Cloning and building paru..."
-arch-chroot "$MOUNT_ROOT" /bin/bash -c '
+log_step "Creating builder user..."
+arch-chroot "$MOUNT_ROOT" useradd -m builder || true
+
+log_step "Cloning and building paru as builder..."
+arch-chroot "$MOUNT_ROOT" su - builder -c '
     cd /tmp
     rm -rf paru
     git clone https://aur.archlinux.org/paru.git
     cd paru
-    makepkg -si --noconfirm
+    makepkg -si --noconfirm --skippgpcheck
 '
 
 log_step "Configuring paru..."
