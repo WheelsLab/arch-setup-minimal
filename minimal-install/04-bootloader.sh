@@ -22,7 +22,7 @@ arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr
 log_step "Deploying Limine UEFI..."
 EFI_DIR="$MOUNT_ROOT/boot/EFI/arch-limine"
 mkdir -p "$EFI_DIR"
-cp /usr/share/limine/BOOTX64.EFI "$EFI_DIR/"
+cp "$MOUNT_ROOT/usr/share/limine/BOOTX64.EFI" "$EFI_DIR/"
 
 log_step "Configuring Limine..."
 ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
