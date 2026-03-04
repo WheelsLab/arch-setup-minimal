@@ -21,9 +21,8 @@ arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine
 
 log_step "Configuring Limine..."
 ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
-ESP_PART="${MOUNT_ROOT}/boot"
 
-cat > "$ESP_PART/limine.cfg" <<EOF
+cat > "$MOUNT_ROOT/boot/limine.cfg" <<EOF
 TIMEOUT=5
 
 :Arch Linux
@@ -34,8 +33,7 @@ TIMEOUT=5
     MODULE_PATH=boot:///initramfs-linux.img
 EOF
 
-log_step "Installing Limine to ESP..."
-ESP_DEVICE=$(lsblk -no pkname /dev/mapper/cryptroot 2>/dev/null || lsblk -no pkname /dev/vda2)
-arch-chroot "$MOUNT_ROOT" limine bios-install "/dev/$ESP_DEVICE"
+log_step "Installing Limine to BIOS..."
+arch-chroot "$MOUNT_ROOT" limine bios-install /dev/vda
 
 log_success "Limine bootloader installed!"
