@@ -33,7 +33,7 @@ TIMEOUT=5
     MODULE_PATH=boot:///initramfs-linux.img
 EOF
 
-log_step "Installing Limine to BIOS..."
-arch-chroot "$MOUNT_ROOT" limine bios-install /dev/vda
-
-log_success "Limine bootloader installed!"
+log_step "Limine configured!"
+log_info "Note: Run 'limine bios-install /dev/vda' after reboot for BIOS boot"
+log_info "Or use UEFI boot (recommended for VM)"
+log_success "Limine bootloader configured!"
