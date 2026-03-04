@@ -16,8 +16,8 @@ if ! is_uefi; then
     exit 1
 fi
 
-log_step "Installing Limine..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine
+log_step "Installing Limine and efibootmgr..."
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr
 
 log_step "Deploying Limine UEFI..."
 EFI_DIR="$MOUNT_ROOT/boot/EFI/arch-limine"
