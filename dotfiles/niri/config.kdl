@@ -1,0 +1,53 @@
+// Niri configuration example
+
+workspace {
+    columns: 1;
+}
+
+window {
+    border: 2px;
+    border-radius: 8;
+    padding: 4px;
+}
+
+window.focused {
+    border-color: "#89b4fa";
+}
+
+keybind {
+    key = "Super";
+    action = "SpawnPersistent";
+    command = "dms";
+}
+
+keybind {
+    key = "Super + Return";
+    action = "Spawn";
+    command = "alacritty";
+}
+
+keybind {
+    key = "Super + Q";
+    action = "Close";
+}
+
+keybind {
+    key = "Super + F";
+    action = "ToggleMaximize";
+}
+
+keybind {
+    key = "Super + H";
+    action = "Spawn";
+    command = "dm-tool switch";
+}
+
+keybind {
+    key = "Super + Tab";
+    action = "WorkspaceNext";
+}
+
+keybind {
+    key = "Super + Shift + Tab";
+    action = "WorkspacePrev";
+}
