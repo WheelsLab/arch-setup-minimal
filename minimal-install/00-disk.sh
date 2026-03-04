@@ -28,8 +28,14 @@ log_warn "About to wipe and repartition $DISK!"
 read -rp "Type 'YES' to confirm: " CONFIRM
 [[ "$CONFIRM" != "YES" ]] && log_error "Aborted" && exit 0
 
-read -rsp "Enter LUKS password: " LUKS_PASSWORD
-echo
+while true; do
+    read -rsp "Enter LUKS password: " LUKS_PASSWORD
+    echo
+    read -rsp "Confirm LUKS password: " LUKS_PASSWORD2
+    echo
+    [[ "$LUKS_PASSWORD" == "$LUKS_PASSWORD2" ]] && break
+    log_error "Passwords do not match. Try again."
+done
 
 read -rp "Enter username for encryption keyfile (optional, press Enter to skip): " KEY_USER
 [[ -z "$KEY_USER" ]] && USE_KEYFILE=false || USE_KEYFILE=true

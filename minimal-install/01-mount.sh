@@ -29,8 +29,14 @@ create_directories \
 
 log_step "Opening LUKS container..."
 if ! cryptsetup isActive "$CRYPT_NAME" 2>/dev/null; then
-    read -rsp "Enter LUKS password: " PASSWORD
-    echo
+    while true; do
+        read -rsp "Enter LUKS password: " PASSWORD
+        echo
+        read -rsp "Confirm LUKS password: " PASSWORD2
+        echo
+        [[ "$PASSWORD" == "$PASSWORD2" ]] && break
+        log_error "Passwords do not match. Try again."
+    done
     LUKS_PART=$(lsblk -ln -o NAME,TYPE | awk '$2=="part"{print "/dev/"$1}' | head -1)
     echo -n "$PASSWORD" | cryptsetup open "$LUKS_PART" "$CRYPT_NAME" -
 fi
