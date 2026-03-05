@@ -58,16 +58,23 @@ prompt() {
     local prompt_text="$1"
     local var_name=""
     local silent=false
+    local one_char=false
     
-    if [[ "$2" == "-s" ]]; then
-        silent=true
-    else
-        var_name="$2"
-    fi
+    for arg in "${@:2}"; do
+        case "$arg" in
+            -s) silent=true ;;
+            -n1) one_char=true ;;
+            *) var_name="$arg" ;;
+        esac
+    done
     
     if $silent; then
         printf "${COLOR_RED_BG_BRIGHT}${prompt_text}${COLOR_NC} "
         read -s
+        echo
+    elif $one_char; then
+        printf "${COLOR_ORANGE}${prompt_text}${COLOR_NC} "
+        read -n 1
         echo
     else
         printf "${COLOR_ORANGE}${prompt_text}${COLOR_NC} "
