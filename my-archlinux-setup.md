@@ -359,6 +359,33 @@ curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /etc/pa
 
 然后取消 `/etc/pacman.d/mirrorlist` 中的注释（该文件会自动被复制到新系统）
 
+```
+##
+## Arch Linux repository mirrorlist
+## Generated on 2026-03-05
+##
+
+## China
+#Server = https://mirrors.aliyun.com/archlinux/$repo/os/$arch
+#Server = https://mirrors.bfsu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.cqu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.hit.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.hust.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.jcut.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.jlu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.jxust.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.neusoft.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.nju.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirror.nyist.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.qlu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.shanghaitech.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.sjtug.sjtu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.wsyu.edu.cn/archlinux/$repo/os/$arch
+#Server = https://mirrors.xjtu.edu.cn/archlinux/$repo/os/$arch
+```
+
 安装必要软件包
 
 ```

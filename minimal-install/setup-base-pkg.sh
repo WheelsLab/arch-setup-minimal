@@ -32,10 +32,4 @@ cp /tmp/mirrorlist "$MOUNT_ROOT/etc/pacman.d/mirrorlist"
 log_step "Generating fstab..."
 genfstab -U "$MOUNT_ROOT" >> "$MOUNT_ROOT/etc/fstab"
 
-log_step "Adjusting /boot mount in fstab..."
-ESP_UUID=$(blkid -s UUID -o value "${DISK:-/dev/vda}p1")
-if [[ -n "$ESP_UUID" ]]; then
-    sed -i "s|^.*/boot.*|UUID=$ESP_UUID          /boot           vfat            rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro      0 2|" "$MOUNT_ROOT/etc/fstab"
-fi
-
 log_success "Base packages installed!"
