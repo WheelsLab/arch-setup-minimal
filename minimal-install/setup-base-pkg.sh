@@ -19,10 +19,14 @@ pacstrap -K "$MOUNT_ROOT" \
     intel-ucode \
     btrfs-progs \
     networkmanager \
+    openssh \
     vim \
     man-db \
     man-pages \
     texinfo
+
+log_step "Enabling SSH..."
+arch-chroot "$MOUNT_ROOT" systemctl enable sshd
 
 log_step "Configuring Chinese mirrorlist..."
 curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /tmp/mirrorlist
