@@ -794,11 +794,19 @@ limine-mkinitcpio
 
 ### 安装 paru（AUR helper）
 
+源码安装
+
 ```
 sudo pacman -S --needed base-devel
 git clone https://aur.archlinux.org/paru.git
 cd paru
 makepkg -si
+```
+
+或者添加 `archlinuxcn` 仓库后直接安装
+
+```
+pacman -S paru
 ```
 
 ### 系统快照（Snapper）

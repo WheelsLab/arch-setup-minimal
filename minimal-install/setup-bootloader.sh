@@ -54,6 +54,13 @@ timeout: 5
     module_path: boot():/initramfs-linux.img
 EOF
 
+if [[ -f "$MOUNT_ROOT/boot/limine.conf" ]]; then
+    log_info "Limine config created: $MOUNT_ROOT/boot/limine.conf"
+else
+    log_error "Failed to create limine.conf"
+    exit 1
+fi
+
 log_step "Creating UEFI boot entry..."
 arch-chroot "$MOUNT_ROOT" efibootmgr \
     --create \
