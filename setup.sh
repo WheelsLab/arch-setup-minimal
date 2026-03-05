@@ -18,11 +18,24 @@ Commands:
     post             Run post-install phase
     dotfiles         Setup dotfiles
     all              Run all phases in order
+    clean            Unmount /mnt and close LUKS container
     help             Show this help message
 
 Without command, shows interactive menu.
 
 EOF
+}
+
+cleanup() {
+    log_section "Cleaning Up"
+    
+    log_step "Unmounting /mnt..."
+    umount -R /mnt 2>/dev/null || true
+    
+    log_step "Closing LUKS container..."
+    cryptsetup close cryptsystem 2>/dev/null || true
+    
+    log_success "Cleanup completed!"
 }
 
 show_menu() {
@@ -35,7 +48,8 @@ show_menu() {
   2) Post-Install (packages & config)
   3) Dotfiles (DMS & Niri)
   4) Run All
-  5) Help
+  5) Clean (unmount & close LUKS)
+  6) Help
   0) Exit
 
 =======================================
@@ -65,7 +79,10 @@ run_minimal() {
     done
     
     log_info "Minimal install completed!"
-    log_info "Now you can reboot: umount -R /mnt && reboot"
+    
+    cleanup
+    
+    log_info "Now you can reboot: reboot"
 }
 
 run_post() {
@@ -123,7 +140,8 @@ interactive_menu() {
             2) run_post ;;
             3) run_dotfiles ;;
             4) run_all ;;
-            5) show_usage ;;
+            5) cleanup ;;
+            6) show_usage ;;
             0) exit 0 ;;
             *) log_error "Invalid option" ;;
         esac
@@ -144,6 +162,7 @@ main() {
             post) run_post ;;
             dotfiles) run_dotfiles ;;
             all) run_all ;;
+            clean|cleanup) cleanup ;;
             help|--help|-h) show_usage ;;
             *) log_error "Unknown command: $1"; show_usage; exit 1 ;;
         esac
