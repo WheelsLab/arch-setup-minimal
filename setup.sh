@@ -80,9 +80,19 @@ run_minimal() {
     
     log_info "Minimal install completed!"
     
-    cleanup
-    
-    log_info "Now you can reboot: reboot"
+    echo ""
+    prompt "Clean up and reboot now? [y/N]: " -n1
+    echo
+    if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+        cleanup
+        log_info "Rebooting..."
+        reboot
+    else
+        log_info "System left mounted at /mnt"
+        log_info "To cleanup later: ./setup.sh clean"
+        log_info "To chroot: arch-chroot /mnt"
+        log_info "To reboot: umount -R /mnt && reboot"
+    fi
 }
 
 run_post() {
