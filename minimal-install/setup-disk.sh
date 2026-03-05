@@ -15,7 +15,7 @@ echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
 
 echo ""
-read -rp "Enter the target disk (e.g., /dev/vda): " DISK
+prompt "Enter the target disk (e.g., /dev/vda): " DISK
 
 if [[ ! "$DISK" =~ ^/dev/ ]]; then
     DISK="/dev/$DISK"
@@ -32,13 +32,15 @@ echo "Disk info:"
 lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 
 log_warn "About to wipe and repartition $DISK!"
-read -rp "Type 'YES' to confirm: " CONFIRM
+prompt "Type 'YES' to confirm: " CONFIRM
 [[ "$CONFIRM" != "YES" ]] && log_error "Aborted" && exit 0
 
 while true; do
-    read -rsp "Enter LUKS password: " LUKS_PASSWORD
+    prompt "Enter LUKS password: " -s
+    LUKS_PASSWORD="$REPLY"
     echo
-    read -rsp "Confirm LUKS password: " LUKS_PASSWORD2
+    prompt "Confirm LUKS password: " -s
+    LUKS_PASSWORD2="$REPLY"
     echo
     [[ "$LUKS_PASSWORD" == "$LUKS_PASSWORD2" ]] && break
     log_error "Passwords do not match. Try again."

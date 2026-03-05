@@ -26,7 +26,7 @@ log_step "Setting locale.conf..."
 echo "LANG=en_US.UTF-8" > "$MOUNT_ROOT/etc/locale.conf"
 
 log_step "Setting hostname..."
-read -rp "Enter hostname [archer]: " HOSTNAME
+prompt "Enter hostname [archer]: " HOSTNAME
 HOSTNAME="${HOSTNAME:-archer}"
 echo "$HOSTNAME" > "$MOUNT_ROOT/etc/hostname"
 
@@ -38,13 +38,13 @@ arch-chroot "$MOUNT_ROOT" passwd
 
 log_step "Creating admin user..."
 while true; do
-    read -rp "Enter username: " USERNAME
+    prompt "Enter username: " USERNAME
     [[ -n "$USERNAME" ]] && break
     log_error "Username cannot be empty"
 done
 
 while true; do
-    read -rp "Confirm username '$USERNAME': " CONFIRM
+    prompt "Confirm username '$USERNAME': " CONFIRM
     [[ "$CONFIRM" == "$USERNAME" ]] && break
     log_warn "Username does not match, try again"
 done
@@ -58,9 +58,11 @@ fi
 
 log_step "Setting user password..."
 while true; do
-    read -rsp "Enter password for '$USERNAME': " USER_PASS
+    prompt "Enter password for '$USERNAME': " -s
+    USER_PASS="$REPLY"
     echo
-    read -rsp "Confirm password: " USER_PASS2
+    prompt "Confirm password: " -s
+    USER_PASS2="$REPLY"
     echo
     [[ "$USER_PASS" == "$USER_PASS2" ]] && break
     log_warn "Passwords do not match, try again"

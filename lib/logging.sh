@@ -16,11 +16,11 @@ log_info() {
 }
 
 log_warn() {
-    echo -e "${COLOR_RED}[!]${COLOR_NC} $*" | tee -a "$LOG_FILE"
+    echo -e "${COLOR_RED}[!] $*${COLOR_NC}" | tee -a "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${COLOR_RED}[✗]${COLOR_NC} $*" | tee -a "$LOG_FILE" >&2
+    echo -e "${COLOR_RED}[✗] $*${COLOR_NC}" | tee -a "$LOG_FILE" >&2
 }
 
 log() {
@@ -54,6 +54,15 @@ log_step() {
 
 log_warn_yellow() {
     echo -e "${COLOR_YELLOW}[!]${COLOR_NC} $*" | tee -a "$LOG_FILE"
+}
+
+prompt() {
+    local prompt_text="$1"
+    local opts=""
+    if [[ "$2" == "-s" ]]; then
+        opts="-s"
+    fi
+    read $opts -rp "${COLOR_ORANGE}$prompt_text${COLOR_NC} " "${@:2}"
 }
 
 confirm() {
