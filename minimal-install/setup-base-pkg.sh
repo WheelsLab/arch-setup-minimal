@@ -11,11 +11,6 @@ log_section "Installing Base Packages"
 
 MOUNT_ROOT="/mnt"
 
-log_step "Configuring Chinese mirrorlist..."
-curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /tmp/mirrorlist
-sed -i 's/^#Server/Server/' /tmp/mirrorlist
-cp /tmp/mirrorlist "$MOUNT_ROOT/etc/pacman.d/mirrorlist"
-
 log_step "Running pacstrap..."
 pacstrap -K "$MOUNT_ROOT" \
     base \
@@ -28,6 +23,11 @@ pacstrap -K "$MOUNT_ROOT" \
     man-db \
     man-pages \
     texinfo
+
+log_step "Configuring Chinese mirrorlist..."
+curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /tmp/mirrorlist
+sed -i 's/^#Server/Server/' /tmp/mirrorlist
+cp /tmp/mirrorlist "$MOUNT_ROOT/etc/pacman.d/mirrorlist"
 
 log_step "Generating fstab..."
 genfstab -U "$MOUNT_ROOT" >> "$MOUNT_ROOT/etc/fstab"
