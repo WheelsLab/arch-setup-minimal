@@ -31,6 +31,8 @@ echo "Selected disk: $DISK"
 echo "Disk info:"
 lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 
+echo "$DISK" > /tmp/install-disk
+
 log_warn "About to wipe and repartition $DISK!"
 prompt "Type 'YES' to confirm: " CONFIRM
 [[ "$CONFIRM" != "YES" ]] && log_error "Aborted" && exit 0

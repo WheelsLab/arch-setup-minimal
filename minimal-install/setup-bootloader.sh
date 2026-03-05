@@ -16,7 +16,13 @@ if ! [[ -d /sys/firmware/efi ]]; then
     exit 1
 fi
 
-DISK="${DISK:-/dev/vda}"
+if [[ -f /tmp/install-disk ]]; then
+    DISK=$(cat /tmp/install-disk)
+else
+    log_error "Disk not configured. Run setup-disk.sh first."
+    exit 1
+fi
+
 ESP_PART="${DISK}p1"
 [[ ! -b "${DISK}p1" ]] && ESP_PART="${DISK}1"
 SYSTEM_PART="${DISK}p2"
