@@ -12,6 +12,10 @@ log_section "Disk Partitioning: LUKS + Btrfs"
 log_warn "This script will completely wipe the selected disk!"
 
 echo ""
+echo "Press Enter to continue to information collection..."
+read
+
+echo ""
 echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
 
