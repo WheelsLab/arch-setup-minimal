@@ -26,10 +26,10 @@ EOF
 }
 
 show_menu() {
-    cat <<EOF
-========================================
+    echo -e "${COLOR_BLUE}
+=======================================
   Arch Linux Minimal Setup
-========================================
+=======================================
 
   1) Minimal Install (base system)
   2) Post-Install (packages & config)
@@ -38,8 +38,8 @@ show_menu() {
   5) Help
   0) Exit
 
-========================================
-EOF
+=======================================
+${COLOR_NC}"
 }
 
 run_minimal() {
