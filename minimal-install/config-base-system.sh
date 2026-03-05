@@ -69,7 +69,27 @@ log_step "Enabling NetworkManager..."
 arch-chroot "$MOUNT_ROOT" systemctl enable NetworkManager.service
 
 log_step "Setting root password..."
-arch-chroot "$MOUNT_ROOT" passwd
+if [[ -f /tmp/install-root-pass ]]; then
+    ROOT_PASS=$(cat /tmp/install-root-pass)
+    echo "root:$ROOT_PASS" | arch-chroot "$MOUNT_ROOT" chpasswd
+else
+    prompt "Enter root password: " -s
+    ROOT_PASS="$REPLY"
+    echo
+    prompt "Confirm root password: " -s
+    ROOT_PASS2="$REPLY"
+    echo
+    while [[ "$ROOT_PASS" != "$ROOT_PASS2" ]]; do
+        log_error "Passwords do not match"
+        prompt "Enter root password: " -s
+        ROOT_PASS="$REPLY"
+        echo
+        prompt "Confirm root password: " -s
+        ROOT_PASS2="$REPLY"
+        echo
+    done
+    echo "root:$ROOT_PASS" | arch-chroot "$MOUNT_ROOT" chpasswd
+fi
 
 log_step "Creating admin user..."
 if ! arch-chroot "$MOUNT_ROOT" id "$USERNAME" 2>/dev/null; then

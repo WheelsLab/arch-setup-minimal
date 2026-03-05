@@ -68,6 +68,23 @@ while [[ "$USER_PASS" != "$USER_PASS2" ]]; do
     echo
 done
 
+echo ""
+prompt "Enter root password: " -s
+ROOT_PASS="$REPLY"
+echo
+prompt "Confirm root password: " -s
+ROOT_PASS2="$REPLY"
+echo
+while [[ "$ROOT_PASS" != "$ROOT_PASS2" ]]; do
+    log_error "Passwords do not match"
+    prompt "Enter root password: " -s
+    ROOT_PASS="$REPLY"
+    echo
+    prompt "Confirm root password: " -s
+    ROOT_PASS2="$REPLY"
+    echo
+done
+
 while true; do
     prompt "Enter LUKS password: " -s
     LUKS_PASSWORD="$REPLY"
@@ -87,6 +104,7 @@ echo ""
 echo "Disk:        $DISK"
 echo "Hostname:    $HOSTNAME"
 echo "Username:    $USERNAME"
+echo "Root:       (set)"
 echo ""
 echo "Partition Layout:"
 echo "  - ESP:     ${DISK}p1 (8 GiB, FAT32)"
@@ -126,6 +144,7 @@ echo "$DISK" > /tmp/install-disk
 echo "$HOSTNAME" > /tmp/install-hostname
 echo "$USERNAME" > /tmp/install-username
 echo "$USER_PASS" > /tmp/install-user-pass
+echo "$ROOT_PASS" > /tmp/install-root-pass
 echo "$LUKS_PASSWORD" > /tmp/install-luks-pass
 
 log_section "Configuring"
