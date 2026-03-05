@@ -148,17 +148,18 @@ echo ""
 
 prompt "Confirm to start installation? [y/N]: " -n1
 echo
-if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
+if [[ "$REPLY" != "y" && "$REPLY" != "Y" ]]; then
     log_error "Aborted"
-    exit 0
+    exit 1
 fi
 
 echo ""
 log_warn "About to WIPE and REPARTITION $DISK!"
-prompt "Type 'YES' to confirm: " CONFIRM
+printf "${COLOR_ORANGE}Type 'YES' to confirm: ${COLOR_NC}"
+read CONFIRM
 if [[ "$CONFIRM" != "YES" ]]; then
     log_error "Aborted"
-    exit 0
+    exit 1
 fi
 
 echo "$DISK" > /tmp/install-disk
