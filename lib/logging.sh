@@ -12,7 +12,7 @@ log_debug() {
 }
 
 log_info() {
-    log "INFO" "$@"
+    echo -e "${COLOR_GREY_BG}${*}${COLOR_NC}" | tee -a "$LOG_FILE"
 }
 
 log_warn() {
@@ -39,7 +39,7 @@ log_section() {
 }
 
 log_success() {
-    echo -e "${COLOR_GREEN}[✓]${COLOR_NC} $*" | tee -a "$LOG_FILE"
+    echo -e "${COLOR_GREEN_BG}[✓] $*${COLOR_NC}" | tee -a "$LOG_FILE"
 }
 
 log_fail() {
