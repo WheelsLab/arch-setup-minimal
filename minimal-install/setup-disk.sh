@@ -9,8 +9,9 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 check_root
 log_section "Disk Partitioning: LUKS + Btrfs"
 
-log_warn "WARNING: This script will completely wipe the selected disk!"
+log_warn "This script will completely wipe the selected disk!"
 
+echo ""
 echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
 
@@ -31,11 +32,41 @@ echo "Selected disk: $DISK"
 echo "Disk info:"
 lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 
-echo "$DISK" > /tmp/install-disk
+echo ""
+prompt "Enter hostname [archer]: " HOSTNAME
+HOSTNAME="${HOSTNAME:-archer}"
 
-log_warn "About to wipe and repartition $DISK!"
-prompt "Type 'YES' to confirm: " CONFIRM
-[[ "$CONFIRM" != "YES" ]] && log_error "Aborted" && exit 0
+echo ""
+prompt "Enter username: " USERNAME
+while [[ -z "$USERNAME" ]]; do
+    log_error "Username cannot be empty"
+    prompt "Enter username: " USERNAME
+done
+
+echo ""
+prompt "Confirm username '$USERNAME': " CONFIRM
+while [[ "$CONFIRM" != "$USERNAME" ]]; do
+    log_error "Username does not match"
+    prompt "Enter username: " USERNAME
+    prompt "Confirm username '$USERNAME': " CONFIRM
+done
+
+echo ""
+prompt "Enter password for '$USERNAME': " -s
+USER_PASS="$REPLY"
+echo
+prompt "Confirm password: " -s
+USER_PASS2="$REPLY"
+echo
+while [[ "$USER_PASS" != "$USER_PASS2" ]]; do
+    log_error "Passwords do not match"
+    prompt "Enter password for '$USERNAME': " -s
+    USER_PASS="$REPLY"
+    echo
+    prompt "Confirm password: " -s
+    USER_PASS2="$REPLY"
+    echo
+done
 
 while true; do
     prompt "Enter LUKS password: " -s
@@ -47,6 +78,55 @@ while true; do
     [[ "$LUKS_PASSWORD" == "$LUKS_PASSWORD2" ]] && break
     log_error "Passwords do not match. Try again."
 done
+
+echo ""
+echo "============================================"
+log_section "Installation Plan"
+echo "============================================"
+echo ""
+echo "Disk:        $DISK"
+echo "Hostname:    $HOSTNAME"
+echo "Username:    $USERNAME"
+echo ""
+echo "Partition Layout:"
+echo "  - ESP:     ${DISK}p1 (8 GiB, FAT32)"
+echo "  - System:  ${DISK}p2 (LUKS encrypted, Btrfs)"
+echo ""
+echo "Btrfs Subvolumes:"
+echo "  - @            -> /"
+echo "  - @home        -> /home"
+echo "  - @log         -> /var/log"
+echo "  - @pkg         -> /var/cache/pacman/pkg"
+echo "  - @snapshots   -> /.snapshots"
+echo "  - @games       -> /mnt/games"
+echo "  - @vm/@libvirt -> /var/lib/libvirt"
+echo "  - @vm/@qemu    -> /var/lib/qemu"
+echo "  - @container/@docker  -> /var/lib/docker"
+echo "  - @container/@podman  -> /var/lib/containers"
+echo ""
+echo "============================================"
+echo ""
+
+prompt "Confirm to start installation? [y/N]: " -n1
+echo
+if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
+    log_error "Aborted"
+    exit 0
+fi
+
+echo ""
+log_warn "About to WIPE and REPARTITION $DISK!"
+prompt "Type 'YES' to confirm: " CONFIRM
+if [[ "$CONFIRM" != "YES" ]]; then
+    log_error "Aborted"
+    exit 0
+fi
+
+echo "$DISK" > /tmp/install-disk
+echo "$HOSTNAME" > /tmp/install-hostname
+echo "$USERNAME" > /tmp/install-username
+echo "$USER_PASS" > /tmp/install-user-pass
+echo "$LUKS_PASSWORD" > /tmp/install-luks-pass
 
 log_section "Configuring"
 
