@@ -56,6 +56,12 @@ else
     log_info "User '$USERNAME' already exists"
 fi
 
+log_step "Installing sudo..."
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo
+
+log_step "Configuring sudo for wheel group..."
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' "$MOUNT_ROOT/etc/sudoers"
+
 log_step "Setting user password..."
 while true; do
     prompt "Enter password for '$USERNAME': " -s
