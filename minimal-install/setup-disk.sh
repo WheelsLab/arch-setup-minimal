@@ -16,6 +16,7 @@ echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
 
 echo ""
+log_success "Select Disk"
 prompt "Enter the target disk (e.g., /dev/vda): " DISK
 
 if [[ ! "$DISK" =~ ^/dev/ ]]; then
@@ -33,6 +34,7 @@ echo "Disk info:"
 lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 
 echo ""
+log_success "System Information"
 prompt "Enter hostname [archer]: " HOSTNAME
 HOSTNAME="${HOSTNAME:-archer}"
 
@@ -52,6 +54,7 @@ while [[ "$CONFIRM" != "$USERNAME" ]]; do
 done
 
 echo ""
+log_success "User Password"
 prompt "Enter password for '$USERNAME': " -s
 USER_PASS="$REPLY"
 echo
@@ -69,6 +72,7 @@ while [[ "$USER_PASS" != "$USER_PASS2" ]]; do
 done
 
 echo ""
+log_success "Root Password"
 prompt "Enter root password: " -s
 ROOT_PASS="$REPLY"
 echo
@@ -84,6 +88,9 @@ while [[ "$ROOT_PASS" != "$ROOT_PASS2" ]]; do
     ROOT_PASS2="$REPLY"
     echo
 done
+
+echo ""
+log_success "Encryption Password"
 
 while true; do
     prompt "Enter LUKS password: " -s
