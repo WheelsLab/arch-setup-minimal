@@ -670,7 +670,7 @@ rd.luks.name=43e02f28-bc3c-4af6-9b5a-94f7886d63ce=cryptsystem root=/dev/mapper/c
 rootflags=subvol=@ rootfstype=btrfs
 ```
 
-在 ESP 分区根目录创建 Limine 配置，编辑 `/etc/limine.conf`，写入以下配置。添加上面内核参数
+在 ESP 分区根目录创建 Limine 配置，编辑 `/boot/limine.conf`，写入以下配置。添加上面内核参数
 
 > 内核参数：https://wiki.archlinuxcn.org/wiki/%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0#Limine
 
@@ -756,6 +756,8 @@ KERNEL_CMDLINE[default]=rd.luks.name=43e02f28-bc3c-4af6-9b5a-94f7886d63ce=crypts
 sudo limine-install
 ```
 
+## 后安装（post-install）
+
 ##### 美化启动画面（Plymouth）
 
 安装 Plymouth
@@ -789,8 +791,6 @@ HOOKS=(... plymouth ...)
 ```
 limine-mkinitcpio
 ```
-
-## 后安装（post-install）
 
 ### 安装 paru（AUR helper）
 

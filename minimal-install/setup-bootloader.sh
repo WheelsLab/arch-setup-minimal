@@ -44,7 +44,7 @@ LUKS_UUID=$(blkid -s UUID -o value "$SYSTEM_PART")
 log_info "LUKS UUID: $LUKS_UUID"
 
 log_step "Creating Limine configuration..."
-cat > "$MOUNT_ROOT/etc/limine.cfg" <<EOF
+cat > "$MOUNT_ROOT/boot/limine.conf" <<EOF
 timeout: 5
 
 /Arch Linux
