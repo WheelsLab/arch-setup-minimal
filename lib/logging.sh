@@ -16,11 +16,11 @@ log_info() {
 }
 
 log_warn() {
-    echo -e "${COLOR_RED}[!] $*${COLOR_NC}" | tee -a "$LOG_FILE"
+    echo -e "${COLOR_RED_BG}[!] $*${COLOR_NC}" | tee -a "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${COLOR_RED}[✗] $*${COLOR_NC}" | tee -a "$LOG_FILE" >&2
+    echo -e "${COLOR_RED_BG}[✗] $*${COLOR_NC}" | tee -a "$LOG_FILE" >&2
 }
 
 log() {
