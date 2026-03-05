@@ -37,8 +37,17 @@ log_step "Setting root password..."
 arch-chroot "$MOUNT_ROOT" passwd
 
 log_step "Creating admin user..."
-read -rp "Enter username: " USERNAME
-USERNAME="${USERNAME:-iclhc}"
+while true; do
+    read -rp "Enter username: " USERNAME
+    [[ -n "$USERNAME" ]] && break
+    log_error "Username cannot be empty"
+done
+
+while true; do
+    read -rp "Confirm username '$USERNAME': " CONFIRM
+    [[ "$CONFIRM" == "$USERNAME" ]] && break
+    log_warn "Username does not match, try again"
+done
 
 if ! arch-chroot "$MOUNT_ROOT" id "$USERNAME" 2>/dev/null; then
     arch-chroot "$MOUNT_ROOT" useradd -m -G wheel -s /bin/bash "$USERNAME"
@@ -47,14 +56,16 @@ else
     log_info "User '$USERNAME' already exists"
 fi
 
-log_step "Installing sudo..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo
-
-log_step "Configuring sudo for wheel group..."
-sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' "$MOUNT_ROOT/etc/sudoers"
-
 log_step "Setting user password..."
-arch-chroot "$MOUNT_ROOT" passwd "$USERNAME"
+while true; do
+    read -rsp "Enter password for '$USERNAME': " USER_PASS
+    echo
+    read -rsp "Confirm password: " USER_PASS2
+    echo
+    [[ "$USER_PASS" == "$USER_PASS2" ]] && break
+    log_warn "Passwords do not match, try again"
+done
+echo "$USERNAME:$USER_PASS" | arch-chroot "$MOUNT_ROOT" chpasswd
 
 log_step "Setting up archlinuxcn repository..."
 cat >> "$MOUNT_ROOT/etc/pacman.conf" <<'EOF'
