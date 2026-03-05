@@ -171,26 +171,44 @@ LUKS 加密
 
 先设计一个分区方案（需要适用于 LUKS 全盘加密、Snapper 快照）
 
-现在的主板基本都是 UEFI 固件，而 UEFI 启动需要 EFI 系统分区，用于存放引导加载器。只支持 fat 文件系统
+现代主板基本都是 **UEFI 固件**，必须使用 **ESP（EFI System Partition）** 来存放引导加载器。ESP 只能使用 FAT 文件系统（通常 FAT32）。
 
-> Wikipedia [EIF system partition](https://en.wikipedia.org/wiki/EFI_system_partition)：EFI 系统分区（EFI system partition）或ESP是数据存储设备（通常是硬盘驱动器或固态硬盘）上的一个分区，供具有统一可扩展固件接口（UEFI）的计算机使用。当计算机启动时，UEFI固件会加载ESP上存储的文件，以启动操作系统和各种实用程序。
+> Wikipedia [ESP system partition](https://en.wikipedia.org/wiki/EFI_system_partition)：EFI 系统分区（ESP）是供 UEFI 固件使用的 FAT 文件系统分区，启动时固件从此处加载引导程序。
 
-然后还需要设置全盘加密，这里只加密一个分区，然后在其上创建 Btrfs 文件系统，然后利用 btrfs 子卷功能，给不同目录分配子卷。规划的分区布局如下
+随后需要配置**全盘加密**。在本方案中，仅对一个主分区进行 LUKS 加密，然后在该加密容器内部创建 Btrfs 文件系统。借助 Btrfs 的子卷（subvolume）机制，可以将系统中不同用途的目录划分到独立子卷中，从而实现快照隔离和数据分离。
 
-首先是分区，一共两个分区：`fat` 分区、LUKS 加密容器分区。规划如下
+整个磁盘仅划分为两个分区：
 
-+ `/dev/vda1`（`vfat`）-> `/boot`：Bootloader 和内核
-+ `/dev/vda2`（LUKS）-> btrfs：子卷
-  + `@`-> `/`：文件系统的根。
-  + `@home`-> `/home`：存储普通用户的家目录。 
-  + `@log` -> `/var/log`：应该持久保存的系统日志。
-  + `@pkg` -> `/var/cache/pacman/pkg/`：软件包的缓存目录
-  + `@snapshots` -> `/.snapshots`：Snapper 快照
-  + `@games` -> 子目录分别映射到 Steam/HeroicGamesLauncher/minecraft-xmcl
-  + `@virtualmachine` -> `/var/lib/libvirt` QEMU/KVM 虚拟机
-  + `@container`
+- 一个用于 UEFI 启动的 FAT32 格式 ESP 分区
+- 一个用于 LUKS 加密的 SYSTEM 分区
+
+分区规划如下：
+
+| 分区        | 类型        | 挂载点  | 说明                |
+| ----------- | ----------- | ------- | ------------------- |
+| `/dev/vda1` | FAT32 (ESP) | `/boot` | Bootloader + Kernel |
+| `/dev/vda2` | LUKS        | Btrfs   | 加密 SYSTEM         |
+
+具体如下
+
++ `/dev/vda1`（`vfat`）-> `/boot`：用于存放 Bootloader 及内核镜像，不参与加密
++ `/dev/vda2`（LUKS）-> btrfs：在 LUKS 容器内部创建 Btrfs 文件系统，并规划如下子卷结构：
+  + `@`-> `/`：系统根目录，用于安装操作系统主体。
+  + `@home`-> `/home`：存放普通用户家目录，不纳入系统快照。
+  + `@log` -> `/var/log`：存储持久化系统日志，避免快照回滚影响日志完整性。
+  + `@pkg` -> `/var/cache/pacman/pkg/`：软件包缓存目录，防止缓存数据污染系统快照。
+  + `@snapshots` -> `/.snapshots`：专用于 Snapper 快照存储。
+  + `@games` ->  `/mnt/games`：用于存放大型游戏数据（如 Steam、Heroic Games Launcher、minecraft-xmcl 等），避免占用系统子卷空间并减少快照体积。
+  + `@vm` ->用于虚拟机数据隔离，对应 QEMU/KVM 虚拟机镜像与状态数据。
+    + `/var/lib/libvirt`
+    + `/var/lib/qemu`
+  + `@container` -> 容器运行时数据目录
+    + `/var/lib/docker`（Docker）
+    + `/var/lib/containers`（Podman）
 
 #### 进行分区
+
+首先按照之前规划的 Btrfs 子卷结构进行分区与初始化：
 
 ```
 ESP
@@ -198,35 +216,31 @@ Btrfs (LUKS)
 ├── @               → /
 ├── @home           → /home
 ├── @snapshots      → /.snapshots
-├── @pkg            → /var/cache/pacman/pkg/
+├── @pkg            → /var/cache/pacman/pkg
 ├── @log            → /var/log
-├── @vm             
+├── @vm
 │   ├── @libvirt    → /var/lib/libvirt
 │   └── @qemu       → /var/lib/qemu
-├── @container      → 
+├── @container
 │   ├── @docker     → /var/lib/docker
 │   └── @podman     → /var/lib/containers
 └── @games          → /mnt/games
 ```
 
-先创建所有顶层子卷，再创建次级子卷
-
-创建完成后再挂载全部目录结构
-
-创建 GPT 分区表
+首先创建 GPT 分区表：
 
 ```
 parted -s /dev/vda mklabel gpt
 ```
 
-创建 EFI 系统分区（8 GiB 是为了等会 `limine` 和 `snapper` 集成时备份内核与启动文件）
+创建 **ESP（EFI System Partition）**。这里分配 **8 GiB** 空间，是为了后续与 `limine` 和 `snapper` 集成时可以在 ESP 中备份内核与启动文件。
 
 ```
 parted -s /dev/vda mkpart ESP fat32 1MiB 8GiB
 parted -s /dev/vda set 1 esp on
 ```
 
-创建 LUKS 容器分区
+创建 LUKS 加密容器分区：
 
 ```
 parted -s /dev/vda mkpart crypt 8GiB 100%
@@ -238,63 +252,101 @@ parted -s /dev/vda mkpart crypt 8GiB 100%
 > parted /dev/vda print
 > ```
 
-格式化 EFI 系统分区
+格式化 ESP：
 
 ```
 mkfs.fat -F32 /dev/vda1
 ```
 
-创建 LUKS 容器
+创建 LUKS 加密容器：
 
 ```
 cryptsetup luksFormat /dev/vda2
 cryptsetup open /dev/vda2 cryptsystem
 ```
 
-创建 Btrfs 文件系统
+在 LUKS 容器中创建 Btrfs 文件系统：
 
 ```
 mkfs.btrfs /dev/mapper/cryptsystem
 ```
 
-创建 Btrfs 子卷结构，先挂载整个 Btrfs 文件系统
+创建 Btrfs 子卷结构
+
+> [!WARNING]
+>
+> 必须先挂载 **Btrfs 顶层文件系统**，然后：
+>
+> 1. 先创建所有 **顶层子卷**
+> 2. 再创建 **嵌套子卷**
+
+挂载 Btrfs 顶层：
 
 ```
 mount /dev/mapper/cryptsystem /mnt
 ```
 
-创建子卷
+创建顶层子卷
 
 ```
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
-btrfs subvolume create /mnt/@log
-btrfs subvolume create /mnt/@pkg
 btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@pkg
+btrfs subvolume create /mnt/@log
+btrfs subvolume create /mnt/@games
+btrfs subvolume create /mnt/@vm
+btrfs subvolume create /mnt/@container
 ```
 
-卸载
+ 创建嵌套子卷
 
 ```
-umount /mnt
+# @vm 虚拟机子卷
+btrfs subvolume create /mnt/@vm/@libvirt
+btrfs subvolume create /mnt/@vm/@qemu
+
+# @container 容器子卷
+btrfs subvolume create /mnt/@container/@docker
+btrfs subvolume create /mnt/@container/@podman
 ```
 
-挂载目录，准备安装系统
+创建完成后即可按照规划挂载各个子卷。
+
+首先挂载根目录
 
 ```
 mount -o subvol=@,compress=zstd,noatime /dev/mapper/cryptsystem /mnt
+```
 
-mkdir -p /mnt/{boot,home,var/log,var/cache/pacman/pkg,.snapshots}
+挂载各个子卷（使用 `--mkdir` 自动创建挂载目录）：
 
-mount -o subvol=@home,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/home
+```
+mount --mkdir -o subvol=@home,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/home
+mount --mkdir -o subvol=@log,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/log
+mount --mkdir -o subvol=@pkg,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/cache/pacman/pkg
+mount --mkdir -o subvol=@snapshots,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/.snapshots
+mount --mkdir -o subvol=@vm/@libvirt,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/lib/libvirt
+mount --mkdir -o subvol=@vm/@qemu,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/lib/qemu
+mount --mkdir -o subvol=@container/@docker,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/lib/docker
+mount --mkdir -o subvol=@container/@podman,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/lib/containers
+mount --mkdir -o subvol=@games,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/mnt/games
+```
 
-mount -o subvol=@log,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/log
+最后挂载 EFI 系统分区：
 
-mount -o subvol=@pkg,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/var/cache/pacman/pkg
-
-mount -o subvol=@snapshots,compress=zstd,noatime /dev/mapper/cryptsystem /mnt/.snapshots
-
+```
 mount /dev/vda1 /mnt/boot
+```
+
+对于 **虚拟机、容器和大型游戏数据**，通常需要关闭 Btrfs 的 Copy-on-Write，以避免性能下降。
+
+```
+chattr +C /mnt/var/lib/libvirt
+chattr +C /mnt/var/lib/qemu
+chattr +C /mnt/var/lib/docker
+chattr +C /mnt/var/lib/containers
+chattr +C /mnt/mnt/games
 ```
 
 ### 安装

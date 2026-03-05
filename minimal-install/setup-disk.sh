@@ -92,6 +92,15 @@ btrfs subvolume create "$MOUNT_ROOT/@home"
 btrfs subvolume create "$MOUNT_ROOT/@log"
 btrfs subvolume create "$MOUNT_ROOT/@pkg"
 btrfs subvolume create "$MOUNT_ROOT/@snapshots"
+btrfs subvolume create "$MOUNT_ROOT/@games"
+
+log_step "Creating nested subvolumes..."
+btrfs subvolume create "$MOUNT_ROOT/@vm"
+btrfs subvolume create "$MOUNT_ROOT/@vm/@libvirt"
+btrfs subvolume create "$MOUNT_ROOT/@vm/@qemu"
+btrfs subvolume create "$MOUNT_ROOT/@container"
+btrfs subvolume create "$MOUNT_ROOT/@container/@docker"
+btrfs subvolume create "$MOUNT_ROOT/@container/@podman"
 
 log_step "Unmounting top-level..."
 umount "$MOUNT_ROOT"
@@ -99,12 +108,25 @@ umount "$MOUNT_ROOT"
 log_step "Mounting subvolumes..."
 mount -o subvol=@,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
 
-mkdir -p "$MOUNT_ROOT"/{boot,home,var/log,var/cache/pacman/pkg,.snapshots}
+mkdir -p "$MOUNT_ROOT"/{boot,home,var/log,var/cache/pacman/pkg,.snapshots,mnt/games,var/lib/libvirt,var/lib/qemu,var/lib/docker,var/lib/containers}
 
 mount -o subvol=@home,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/home"
 mount -o subvol=@log,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/log"
 mount -o subvol=@pkg,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/cache/pacman/pkg"
 mount -o subvol=@snapshots,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/.snapshots"
+mount -o subvol=@games,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/mnt/games"
+
+mount -o subvol=@vm/@libvirt,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/lib/libvirt"
+mount -o subvol=@vm/@qemu,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/lib/qemu"
+mount -o subvol=@container/@docker,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/lib/docker"
+mount -o subvol=@container/@podman,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/lib/containers"
+
+log_step "Disabling CoW on high I/O subvolumes..."
+for dir in "$MOUNT_ROOT/mnt/games" \
+           "$MOUNT_ROOT/var/lib/libvirt" "$MOUNT_ROOT/var/lib/qemu" \
+           "$MOUNT_ROOT/var/lib/docker" "$MOUNT_ROOT/var/lib/containers"; do
+    chattr +C "$dir" 2>/dev/null || log_warn "Cannot disable CoW on $dir"
+done
 
 log_step "Mounting ESP..."
 mount "$ESP_PART" "$MOUNT_ROOT/boot"
