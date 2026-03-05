@@ -35,9 +35,7 @@ log() {
 log_section() {
     local title="$1"
     echo "" | tee -a "$LOG_FILE"
-    echo "========================================" | tee -a "$LOG_FILE"
-    echo "  $title" | tee -a "$LOG_FILE"
-    echo "========================================" | tee -a "$LOG_FILE"
+    echo -e "${COLOR_BLUE_BG}  $title  ${COLOR_NC}" | tee -a "$LOG_FILE"
 }
 
 log_success() {
