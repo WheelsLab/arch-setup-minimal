@@ -46,13 +46,10 @@ run_minimal() {
     log_section "Starting Minimal Install Phase"
     
     local scripts=(
-        "minimal-install/00-disk.sh"
-        "minimal-install/01-mount.sh"
-        "minimal-install/02-base-pkg.sh"
-        "minimal-install/03-config-base-system.sh"
-        "minimal-install/04-bootloader.sh"
-        "minimal-install/05-users.sh"
-        "minimal-install/06-aur-helper.sh"
+        "minimal-install/setup-disk.sh"
+        "minimal-install/setup-base-pkg.sh"
+        "minimal-install/config-base-system.sh"
+        "minimal-install/setup-bootloader.sh"
     )
     
     for script in "${scripts[@]}"; do
@@ -67,7 +64,8 @@ run_minimal() {
         fi
     done
     
-    log_success "Minimal install completed!"
+    log_info "Minimal install completed!"
+    log_info "Now you can reboot: umount -R /mnt && reboot"
 }
 
 run_post() {

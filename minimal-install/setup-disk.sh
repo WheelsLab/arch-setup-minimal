@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/constants.sh"
+source "$SCRIPT_DIR/../lib/logging.sh"
+source "$SCRIPT_DIR/../lib/utils.sh"
+
+check_root
+log_section "Disk Partitioning: LUKS + Btrfs"
+
+log_warn "WARNING: This script will completely wipe the selected disk!"
+
+echo "Available disks:"
+lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
+
+read -rp "Enter the target disk (e.g., /dev/vda): " DISK
+
+if [[ ! -b "$DISK" ]]; then
+    log_error "Disk $DISK does not exist"
+    exit 1
+fi
+
+echo "Current partitions on $DISK:"
+lsblk "$DISK"
+
+log_warn "About to wipe and repartition $DISK!"
+read -rp "Type 'YES' to confirm: " CONFIRM
+[[ "$CONFIRM" != "YES" ]] && log_error "Aborted" && exit 0
+
+while true; do
+    read -rsp "Enter LUKS password: " LUKS_PASSWORD
+    echo
+    read -rsp "Confirm LUKS password: " LUKS_PASSWORD2
+    echo
+    [[ "$LUKS_PASSWORD" == "$LUKS_PASSWORD2" ]] && break
+    log_error "Passwords do not match. Try again."
+done
+
+log_section "Configuring"
+
+log_step "Checking for existing mounts..."
+if mountpoint -q /mnt 2>/dev/null; then
+    log_warn "Unmounting existing mounts on /mnt..."
+    umount -R /mnt 2>/dev/null || true
+fi
+
+log_step "Closing any active LUKS containers..."
+for mapper in /dev/mapper/crypt*; do
+    [[ -e "$mapper" ]] && cryptsetup close "$mapper" 2>/dev/null && log_info "Closed $mapper"
+done
+
+log_step "Refreshing partition table..."
+partprobe "$DISK" 2>/dev/null || true
+
+ESP_SIZE="8GiB"
+CRYPT_NAME="cryptsystem"
+MOUNT_ROOT="/mnt"
+
+log_step "Wiping disk..."
+parted -s "$DISK" mklabel gpt
+
+log_step "Creating GPT partitions..."
+parted -s "$DISK" mkpart ESP fat32 1MiB "$ESP_SIZE"
+parted -s "$DISK" set 1 esp on
+parted -s "$DISK" mkpart crypt "$ESP_SIZE" 100%
+partprobe "$DISK"
+
+ESP_PART="${DISK}p1"
+[[ ! -b "${DISK}p1" ]] && ESP_PART="${DISK}1"
+SYSTEM_PART="${DISK}p2"
+[[ ! -b "${DISK}p2" ]] && SYSTEM_PART="${DISK}2"
+
+log_info "ESP: $ESP_PART, System: $SYSTEM_PART"
+
+log_step "Formatting ESP..."
+mkfs.fat -F32 "$ESP_PART"
+
+log_step "Setting up LUKS..."
+echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat "$SYSTEM_PART" -
+echo -n "$LUKS_PASSWORD" | cryptsetup open "$SYSTEM_PART" "$CRYPT_NAME" -
+
+log_step "Creating Btrfs filesystem..."
+mkfs.btrfs "/dev/mapper/$CRYPT_NAME"
+
+log_step "Mounting top-level Btrfs..."
+mount "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
+
+log_step "Creating subvolumes..."
+btrfs subvolume create "$MOUNT_ROOT/@"
+btrfs subvolume create "$MOUNT_ROOT/@home"
+btrfs subvolume create "$MOUNT_ROOT/@log"
+btrfs subvolume create "$MOUNT_ROOT/@pkg"
+btrfs subvolume create "$MOUNT_ROOT/@snapshots"
+
+log_step "Unmounting top-level..."
+umount "$MOUNT_ROOT"
+
+log_step "Mounting subvolumes..."
+mount -o subvol=@,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
+
+mkdir -p "$MOUNT_ROOT"/{boot,home,var/log,var/cache/pacman/pkg,.snapshots}
+
+mount -o subvol=@home,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/home"
+mount -o subvol=@log,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/log"
+mount -o subvol=@pkg,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/var/cache/pacman/pkg"
+mount -o subvol=@snapshots,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT/.snapshots"
+
+log_step "Mounting ESP..."
+mount "$ESP_PART" "$MOUNT_ROOT/boot"
+
+log_success "Disk setup completed!"
+log_info "Root: $MOUNT_ROOT, Boot: $MOUNT_ROOT/boot"
+log_info "LUKS container: $CRYPT_NAME"
+
+LUKS_UUID=$(blkid -s UUID -o value "$SYSTEM_PART")
+log_info "LUKS UUID: $LUKS_UUID"
