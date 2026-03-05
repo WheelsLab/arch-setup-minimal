@@ -14,15 +14,22 @@ log_warn "WARNING: This script will completely wipe the selected disk!"
 echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE | grep disk
 
+echo ""
 read -rp "Enter the target disk (e.g., /dev/vda): " DISK
+
+if [[ ! "$DISK" =~ ^/dev/ ]]; then
+    DISK="/dev/$DISK"
+fi
 
 if [[ ! -b "$DISK" ]]; then
     log_error "Disk $DISK does not exist"
     exit 1
 fi
 
-echo "Current partitions on $DISK:"
-lsblk "$DISK"
+echo ""
+echo "Selected disk: $DISK"
+echo "Disk info:"
+lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 
 log_warn "About to wipe and repartition $DISK!"
 read -rp "Type 'YES' to confirm: " CONFIRM
