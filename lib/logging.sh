@@ -66,7 +66,7 @@ prompt() {
     fi
     
     if $silent; then
-        printf "${COLOR_ORANGE}${prompt_text}${COLOR_NC} "
+        printf "${COLOR_RED_BG_BRIGHT}${prompt_text}${COLOR_NC} "
         read -s
         echo
     else
