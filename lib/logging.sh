@@ -58,11 +58,23 @@ log_warn_yellow() {
 
 prompt() {
     local prompt_text="$1"
-    local opts=""
+    local var_name=""
+    local silent=false
+    
     if [[ "$2" == "-s" ]]; then
-        opts="-s"
+        silent=true
+    else
+        var_name="$2"
     fi
-    read $opts -rp "${COLOR_ORANGE}$prompt_text${COLOR_NC} " "${@:2}"
+    
+    if $silent; then
+        printf "${COLOR_ORANGE}${prompt_text}${COLOR_NC} "
+        read -s
+        echo
+    else
+        printf "${COLOR_ORANGE}${prompt_text}${COLOR_NC} "
+        read "$var_name"
+    fi
 }
 
 confirm() {
