@@ -58,14 +58,14 @@ sudo mkdir -p /.snapshots
 
 log_step "Adding /.snapshots to /etc/fstab if not exists..."
 if ! grep -q '/.snapshots' /etc/fstab; then
-    SNAPSHOT_UUID=$(sudo btrfs subvolume list / | grep '@snapshots' | awk '{print $NF}' | cut -d'/' -f1)
-    if [[ -z "$SNAPSHOT_UUID" ]]; then
-        ROOT_UUID=$(findmnt -n -o SOURCE -T / | cut -d'[' -f1 | xargs blkid -s UUID -o value)
+    ROOT_UUID=$(grep ' / btrfs ' /etc/fstab | awk '{print $1}' | cut -d'=' -f2)
+    if [[ -n "$ROOT_UUID" ]]; then
+        echo "UUID=$ROOT_UUID  /.snapshots  btrfs  subvol=@snapshots,compress=zstd,ssd,noatime  0 0" | sudo tee -a /etc/fstab > /dev/null
+        log_info "Added /.snapshots to /etc/fstab with UUID=$ROOT_UUID"
     else
-        ROOT_UUID=$(findmnt -n -o SOURCE -T / | cut -d'[' -f1 | xargs blkid -s UUID -o value)
+        log_error "Failed to get root UUID from /etc/fstab"
+        exit 1
     fi
-    echo "UUID=$ROOT_UUID  /.snapshots  btrfs  subvol=@snapshots,compress=zstd,ssd,noatime  0 0" | sudo tee -a /etc/fstab > /dev/null
-    log_info "Added /.snapshots to /etc/fstab"
 fi
 
 log_step "Mounting /.snapshots..."
