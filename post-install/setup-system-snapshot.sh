@@ -8,73 +8,75 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 log_section "Configuring Snapper Snapshot System"
 
+SNAPSHOTS_SUBVOL="@snapshots"
+
 log_step "Installing snapper..."
 retry_command 3 sudo pacman -S --noconfirm snapper
 
-log_step "Cleaning up existing snapshots directory..."
-if mountpoint -q /.snapshots 2>/dev/null; then
-    sudo umount /.snapshots
-    sudo rmdir /.snapshots
+log_step "Detecting snapshots subvolume..."
+if sudo btrfs subvolume list / | grep -q "@snapshots"; then
+    SNAPSHOTS_SUBVOL="@snapshots"
+    log_info "Using @snapshots subvolume"
+elif sudo btrfs subvolume list / | grep -q "\.snapshots"; then
+    SNAPSHOTS_SUBVOL=".snapshots"
+    log_info "Using .snapshots subvolume"
+else
+    log_warn "No snapshots subvolume found, will create one"
+    SNAPSHOTS_SUBVOL="@snapshots"
 fi
 
-log_step "Creating snapper configuration for root..."
+SNAPSHOT_ROOT="/$SNAPSHOTS_SUBVOL"
+
+log_step "Cleaning up existing snapper configuration..."
 config="root"
 
-# Check if config exists
 if sudo snapper list-configs | awk '{print $1}' | grep -qx "$config"; then
     log_info "Snapper config exists, cleaning up..."
     
-    # Get all snapshot IDs (excluding 0)
     ids=$(sudo snapper -c "$config" list | awk 'NR>2 {print $1}' | grep -v '^0$' || true)
     
-    if [[ -z "$ids" ]]; then
-        log_info "No snapshots to delete"
-    else
+    if [[ -n "$ids" ]]; then
         count=$(echo "$ids" | wc -l)
-        
-        if [[ "$count" -eq 1 ]]; then
-            id=$(echo "$ids")
-            log_info "Deleting snapshot $id"
-            sudo snapper -c "$config" delete --sync "$id"
-        else
-            last_id=$(echo "$ids" | tail -n1)
-            log_info "Deleting snapshots 1-$last_id"
-            sudo snapper -c "$config" delete --sync 1-"$last_id"
-        fi
+        log_info "Deleting $count snapshots..."
+        last_id=$(echo "$ids" | tail -n1)
+        sudo snapper -c "$config" delete --sync 1-"$last_id" || true
     fi
     
-    # Unmount /.snapshots
-    if mountpoint -q /.snapshots 2>/dev/null; then
-        sudo umount /.snapshots
-    fi
+    sudo rm -f "/etc/snapper/configs/$config" || true
     
-    # Remove config file
-    sudo rm -f "/etc/snapper/configs/$config"
-    
-    # Update snapper config
     if [[ -f /etc/conf.d/snapper ]]; then
-        sudo sed -i 's/^SNAPPER_CONFIGS=.*/SNAPPER_CONFIGS=""/' /etc/conf.d/snapper
+        sudo sed -i 's/^SNAPPER_CONFIGS=.*/SNAPPER_CONFIGS=""/' /etc/conf.d/snapper || true
     fi
     
     log_info "Snapper cleanup complete"
+fi
+
+log_step "Unmounting snapshots if mounted..."
+if mountpoint -q "$SNAPSHOT_ROOT" 2>/dev/null; then
+    sudo umount "$SNAPSHOT_ROOT" || true
+fi
+
+log_step "Creating snapper configuration for root..."
+sudo snapper -c root create-config / || {
+    log_error "Failed to create snapper config"
+    exit 1
+}
+
+log_step "Cleaning up snapper auto-created subvolume..."
+if sudo btrfs subvolume list / | grep -q "$SNAPSHOTS_SUBVOL"; then
+    if ! mountpoint -q "$SNAPSHOT_ROOT" 2>/dev/null; then
+        sudo mkdir -p "$SNAPSHOT_ROOT"
+        sudo mount "$SNAPSHOT_ROOT"
+    fi
     
-    # Delete .snapshots btrfs subvolume
-    if sudo btrfs subvolume list / | grep -q '\.snapshots'; then
-        log_info "Deleting .snapshots subvolume"
-        sudo btrfs subvolume delete /.snapshots 2>/dev/null || true
+    if mountpoint -q "$SNAPSHOT_ROOT" 2>/dev/null; then
+        sudo btrfs subvolume delete "$SNAPSHOT_ROOT"/* 2>/dev/null || true
     fi
 fi
 
-sudo snapper -c root create-config /
-
-log_step "Removing snapper auto-created subvolume..."
-if sudo btrfs subvolume list / | grep -q '\.snapshots'; then
-    sudo btrfs subvolume delete /.snapshots 2>/dev/null || true
-fi
-
 log_step "Recreating snapshots directory..."
-sudo mkdir -p /.snapshots
-sudo mount /.snapshots/
+sudo mkdir -p "$SNAPSHOT_ROOT"
+sudo mount "$SNAPSHOT_ROOT"
 
 log_step "Installing snap-pac (pacman integration)..."
 retry_command 3 sudo pacman -S --noconfirm snap-pac
