@@ -55,6 +55,20 @@ fi
 
 log_step "Recreating /.snapshots directory..."
 sudo mkdir -p /.snapshots
+
+log_step "Adding /.snapshots to /etc/fstab if not exists..."
+if ! grep -q '/.snapshots' /etc/fstab; then
+    SNAPSHOT_UUID=$(sudo btrfs subvolume list / | grep '@snapshots' | awk '{print $NF}' | cut -d'/' -f1)
+    if [[ -z "$SNAPSHOT_UUID" ]]; then
+        ROOT_UUID=$(findmnt -n -o SOURCE -T / | cut -d'[' -f1 | xargs blkid -s UUID -o value)
+    else
+        ROOT_UUID=$(findmnt -n -o SOURCE -T / | cut -d'[' -f1 | xargs blkid -s UUID -o value)
+    fi
+    echo "UUID=$ROOT_UUID  /.snapshots  btrfs  subvol=@snapshots,compress=zstd,ssd,noatime  0 0" | sudo tee -a /etc/fstab > /dev/null
+    log_info "Added /.snapshots to /etc/fstab"
+fi
+
+log_step "Mounting /.snapshots..."
 sudo mount /.snapshots/
 
 log_step "Installing snap-pac (pacman integration)..."
