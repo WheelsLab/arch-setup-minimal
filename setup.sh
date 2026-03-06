@@ -122,12 +122,23 @@ run_post() {
 run_dotfiles() {
     log_section "Setting Up Dotfiles"
     
-    if [[ -f "$SCRIPT_DIR/dotfiles/setup.sh" ]]; then
-        bash "$SCRIPT_DIR/dotfiles/setup.sh"
-    else
-        log_error "dotfiles/setup.sh not found"
-        exit 1
-    fi
+    local scripts=(
+        "dotfiles/setup-localization.sh"
+        "dotfiles/setup-niri-dms.sh"
+        "dotfiles/setup-app.sh"
+    )
+    
+    for script in "${scripts[@]}"; do
+        if [[ -f "$SCRIPT_DIR/$script" ]]; then
+            log_step "Running: $script"
+            bash "$SCRIPT_DIR/$script" || {
+                log_error "Failed: $script"
+                exit 1
+            }
+        else
+            log_warn "Script not found: $script"
+        fi
+    done
     
     log_success "Dotfiles setup completed!"
 }
