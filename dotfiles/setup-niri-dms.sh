@@ -44,15 +44,15 @@ else
 fi
 
 log_step "Generating DMS configuration..."
-if check_command quickshell; then
-    quickshell --setup-dms colors
-    quickshell --setup-dms layout
-    quickshell --setup-dms alttab
-    quickshell --setup-dms binds
-    quickshell --setup-dms outputs
-    quickshell --setup-dms cursor
+if check_command dms; then
+    dms setup colors
+    dms setup layout
+    dms setup alttab
+    dms setup binds
+    dms setup outputs
+    dms setup cursor
 else
-    log_warn "quickshell command not found, skipping DMS configuration"
+    log_warn "dms command not found, skipping DMS configuration"
 fi
 
 log_step "Enabling DMS autostart..."
@@ -68,9 +68,9 @@ else
     exit 1
 fi
 
-if check_command quickshell; then
-    quickshell --setup-dms greeter enable
-    quickshell --setup-dms greeter sync
+if check_command dms; then
+    dms greeter enable
+    dms greeter sync
 fi
 
 log_step "Installing dgop..."
