@@ -154,3 +154,32 @@ create_directories() {
         mkdir -p "$dir"
     done
 }
+
+retry_command() {
+    local max_attempts="${1:-3}"
+    shift
+    local cmd=("$@")
+    local attempt=1
+    local success=false
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        if "${cmd[@]}"; then
+            success=true
+            break
+        fi
+        log_warn "Attempt $attempt/$max_attempts failed: ${cmd[*]}"
+        ((attempt++))
+        if [[ $attempt -le $max_attempts ]]; then
+            sleep 2
+        fi
+    done
+    
+    if [[ "$success" == "false" ]]; then
+        log_warn "Command failed after $max_attempts attempts: ${cmd[*]}"
+        if confirm "Retry again?"; then
+            retry_command 3 "${cmd[@]}"
+        else
+            return 1
+        fi
+    fi
+}

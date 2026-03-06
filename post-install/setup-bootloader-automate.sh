@@ -50,7 +50,7 @@ log_info "LUKS UUID: $LUKS_UUID"
 log_info "Crypt name: $CRYPT_NAME"
 
 log_step "Installing limine-mkinitcpio-hook..."
-paru -S --noconfirm limine-mkinitcpio-hook
+retry_command 3 paru -S --noconfirm limine-mkinitcpio-hook
 
 log_step "Configuring limine..."
 if [[ ! -f /etc/default/limine ]]; then
@@ -67,7 +67,7 @@ MAX_SNAPSHOT_ENTRIES=50
 EOF
 
 log_step "Installing limine-snapper-sync..."
-paru -S --noconfirm limine-snapper-sync
+retry_command 3 paru -S --noconfirm limine-snapper-sync
 
 log_step "Configuring mkinitcpio for sd-btrfs-overlayfs..."
 sudo sed -i '/^HOOKS=/ {
