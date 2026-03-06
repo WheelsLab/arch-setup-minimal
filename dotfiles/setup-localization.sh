@@ -8,6 +8,18 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 trap 'log_error "Script failed at line $LINENO: $BASH_COMMAND" && exit 1' ERR
 
+install_aur() {
+    local package="$1"
+    if check_command yay; then
+        retry_command 3 yay -S --noconfirm "$package"
+    elif check_command paru; then
+        retry_command 3 paru -S --noconfirm "$package"
+    else
+        log_error "No AUR helper (yay/paru) found"
+        exit 1
+    fi
+}
+
 log_section "Configuring Chinese Localization"
 
 log_step "Configuring system locale..."
@@ -17,31 +29,26 @@ sudo locale-gen
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf > /dev/null
 
 log_step "Installing Fcitx5 and Chinese addons..."
-sudo pacman -S --noconfirm fcitx5-im fcitx5-chinese-addons
+sudo pacman -S --noconfirm fcitx5-im fcitx5-chinese-addons || {
+    log_error "Failed to install Fcitx5"
+    exit 1
+}
 
 log_step "Installing Rime input method..."
-if check_command yay; then
-    yay -S --noconfirm fcitx5-rime rime-ice-git fcitx5-material-color
-elif check_command paru; then
-    paru -S --noconfirm fcitx5-rime rime-ice-git fcitx5-material-color
-else
-    log_error "No AUR helper (yay/paru) found"
-    exit 1
-fi
+install_aur fcitx5-rime rime-ice-git fcitx5-material-color
 
 log_step "Installing Chinese fonts..."
-sudo pacman -S --noconfirm adobe-source-han-serif-cn-fonts wqy-zenhei
-sudo pacman -S --noconfirm noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra
+sudo pacman -S --noconfirm adobe-source-han-serif-cn-fonts wqy-zenhei || {
+    log_error "Failed to install Chinese fonts"
+    exit 1
+}
+sudo pacman -S --noconfirm noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra || {
+    log_error "Failed to install general fonts"
+    exit 1
+}
 
 log_step "Installing programming fonts..."
-if check_command yay; then
-    yay -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm ttf-sarasa-gothic-nerd-fonts
-elif check_command paru; then
-    paru -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm ttf-sarasa-gothic-nerd-fonts
-else
-    log_error "No AUR helper (yay/paru) found"
-    exit 1
-fi
+install_aur ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm ttf-sarasa-gothic-nerd-fonts
 
 log_success "Chinese localization setup completed!"
 echo ""

@@ -9,7 +9,7 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 log_section "Configuring Snapper Snapshot System"
 
 log_step "Installing snapper..."
-sudo pacman -S --noconfirm snapper
+retry_command 3 sudo pacman -S --noconfirm snapper
 
 log_step "Cleaning up existing snapshots directory..."
 if mountpoint -q /.snapshots 2>/dev/null; then
@@ -77,10 +77,10 @@ sudo mkdir -p /.snapshots
 sudo mount /.snapshots/
 
 log_step "Installing snap-pac (pacman integration)..."
-sudo pacman -S --noconfirm snap-pac
+retry_command 3 sudo pacman -S --noconfirm snap-pac
 
 log_step "Installing cronie (automatic timeline snapshots)..."
-sudo pacman -S --noconfirm cronie
+retry_command 3 sudo pacman -S --noconfirm cronie
 
 log_step "Enabling cronie service..."
 sudo systemctl enable --now cronie.service

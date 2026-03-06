@@ -23,13 +23,14 @@ pacstrap -K "$MOUNT_ROOT" \
     vim \
     man-db \
     man-pages \
-    texinfo
+    texinfo \
+    git
 
 log_step "Enabling SSH..."
 arch-chroot "$MOUNT_ROOT" systemctl enable sshd
 
 log_step "Configuring Chinese mirrorlist..."
-curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /tmp/mirrorlist
+retry_command 3 curl -L 'https://archlinux.org/mirrorlist/?country=CN&protocol=https' -o /tmp/mirrorlist
 sed -i 's/^#Server/Server/' /tmp/mirrorlist
 cp /tmp/mirrorlist "$MOUNT_ROOT/etc/pacman.d/mirrorlist"
 

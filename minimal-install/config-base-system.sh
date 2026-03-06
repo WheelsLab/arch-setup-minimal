@@ -100,7 +100,10 @@ else
 fi
 
 log_step "Installing sudo..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo || {
+    log_error "Failed to install sudo"
+    exit 1
+}
 
 log_step "Configuring sudo for wheel group..."
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' "$MOUNT_ROOT/etc/sudoers"
@@ -116,10 +119,16 @@ Server = https://repo.archlinuxcn.org/$arch
 EOF
 
 log_step "Installing archlinuxcn-keyring..."
-arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring
+arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring || {
+    log_error "Failed to install archlinuxcn-keyring"
+    exit 1
+}
 
 log_step "Installing archlinuxcn-mirrorlist-git..."
-arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git
+arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git || {
+    log_error "Failed to install archlinuxcn-mirrorlist-git"
+    exit 1
+}
 
 log_step "Updating pacman.conf with mirrorlist..."
 sed -i '/\[archlinuxcn\]/a Include = /etc/pacman.d/archlinuxcn-mirrorlist' "$MOUNT_ROOT/etc/pacman.conf"

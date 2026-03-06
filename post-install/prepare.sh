@@ -9,7 +9,7 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 log_section "Installing AUR Helper (paru)"
 
 log_step "Installing base-devel..."
-sudo pacman -S --needed base-devel
+retry_command 3 sudo pacman -S --needed --noconfirm base-devel
 
 log_step "Checking if paru is already installed..."
 if command -v paru &>/dev/null; then
@@ -19,7 +19,7 @@ else
     if pacman -Qs '^paru$' &>/dev/null; then
         log_info "paru is already in local database"
     else
-        sudo pacman -S --noconfirm paru
+        retry_command 3 sudo pacman -S --noconfirm paru
     fi
 fi
 

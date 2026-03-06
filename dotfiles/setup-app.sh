@@ -45,12 +45,12 @@ install_from_pkglist() {
     
     if [[ ${#official_packages[@]} -gt 0 ]]; then
         log_step "Installing official packages from $(basename "$pkglist_file")..."
-        sudo pacman -S --noconfirm "${official_packages[@]}"
+        retry_command 3 sudo pacman -S --noconfirm "${official_packages[@]}"
     fi
     
     if [[ ${#aur_packages[@]} -gt 0 ]]; then
         log_step "Installing AUR packages from $(basename "$pkglist_file")..."
-        "$aur_helper" -S --noconfirm "${aur_packages[@]}"
+        retry_command 3 "$aur_helper" -S --noconfirm "${aur_packages[@]}"
     fi
 }
 

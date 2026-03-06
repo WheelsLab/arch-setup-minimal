@@ -30,7 +30,10 @@ SYSTEM_PART="${DISK}p2"
 CRYPT_NAME="cryptsystem"
 
 log_step "Installing Limine and efibootmgr..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr
+arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr || {
+    log_error "Failed to install limine. Check network connection."
+    exit 1
+}
 
 log_step "Deploying Limine UEFI..."
 EFI_DIR="$MOUNT_ROOT/boot/EFI/arch-limine"
