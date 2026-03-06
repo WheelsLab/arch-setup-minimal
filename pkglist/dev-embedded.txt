@@ -1,0 +1,22 @@
+# ===== ARM Toolchain =====
+arm-none-eabi-binutils
+arm-none-eabi-gcc
+arm-none-eabi-gdb
+arm-none-eabi-newlib
+
+# ===== Debug / Flash =====
+openocd
+stm32cubemx   # AUR
+stm32cubeprog   # AUR
+
+# ===== Serial Tools =====
+minicom
+tinyserial-git   # AUR
+serialtool   # AUR
+
+# ===== Debug UI =====
+seer-gdb   # AUR
+
+# ===== IDE =====
+visual-studio-code-bin   # AUR
+dotnet-runtime-6.0-bin   # AUR

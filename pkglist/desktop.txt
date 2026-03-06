@@ -1,0 +1,14 @@
+# ===== KDE Applications =====
+kcalc
+filelight
+ark
+dolphin
+krdc
+
+# ===== Fonts =====
+ttf-lxgw-wenkai
+ttf-lxgw-wenkai-nerd   # AUR
+
+# ===== Browsers =====
+firefox
+google-chrome   # AUR
