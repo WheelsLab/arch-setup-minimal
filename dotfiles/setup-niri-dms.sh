@@ -10,17 +10,6 @@ trap 'log_error "Script failed at line $LINENO: $BASH_COMMAND" && exit 1' ERR
 
 log_section "Installing Niri + DMS"
 
-log_step "Installing chezmoi..."
-if ! check_command chezmoi; then
-    retry_command 3 sudo pacman -S --noconfirm chezmoi || {
-        log_error "Failed to install chezmoi"
-        exit 1
-    }
-fi
-
-log_step "Applying personal dotfiles..."
-retry_command 3 chezmoi init --apply https://github.com/WheelsLab/dotfiles-chezmoi.git
-
 log_step "Installing Niri WM..."
 if ! check_command niri; then
     if check_command yay; then
@@ -41,6 +30,12 @@ elif check_command paru; then
 else
     log_error "No AUR helper (yay/paru) found"
     exit 1
+fi
+
+log_step "Cleaning up existing DMS configuration..."
+if [[ -d "${HOME}/.config/niri/dms" ]]; then
+    rm -rf "${HOME}/.config/niri/dms"
+    log_info "Removed existing DMS configuration"
 fi
 
 log_step "Generating DMS configuration..."
@@ -78,5 +73,16 @@ retry_command 3 sudo pacman -S --noconfirm dgop || {
     log_error "Failed to install dgop"
     exit 1
 }
+
+log_step "Installing chezmoi..."
+if ! check_command chezmoi; then
+    retry_command 3 sudo pacman -S --noconfirm chezmoi || {
+        log_error "Failed to install chezmoi"
+        exit 1
+    }
+fi
+
+log_step "Applying personal dotfiles (run after DMS setup)..."
+retry_command 3 chezmoi init --apply https://github.com/WheelsLab/dotfiles-chezmoi.git
 
 log_success "Niri + DMS setup completed!"

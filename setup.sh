@@ -123,8 +123,8 @@ run_dotfiles() {
     log_section "Setting Up Dotfiles"
     
     local scripts=(
-        "dotfiles/setup-localization.sh"
         "dotfiles/setup-niri-dms.sh"
+        "dotfiles/setup-localization.sh"
         "dotfiles/setup-app.sh"
     )
     

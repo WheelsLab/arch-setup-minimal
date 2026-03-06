@@ -7,7 +7,7 @@ arm-none-eabi-newlib
 # ===== Debug / Flash =====
 openocd
 stm32cubemx   # AUR
-stm32cubeprog   # AUR
+# stm32cubeprog   # AUR 手工介入，需要特殊处理
 
 # ===== Serial Tools =====
 minicom

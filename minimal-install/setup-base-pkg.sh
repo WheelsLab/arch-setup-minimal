@@ -12,7 +12,7 @@ log_section "Installing Base Packages"
 MOUNT_ROOT="/mnt"
 
 log_step "Running pacstrap..."
-pacstrap -K "$MOUNT_ROOT" \
+retry_command 3 pacstrap -K "$MOUNT_ROOT" \
     base \
     linux \
     linux-firmware \
