@@ -99,10 +99,9 @@ run_post() {
     log_section "Starting Post-Install Phase"
     
     local scripts=(
-        "post-install/01-system-packages.sh"
-        "post-install/02-desktop-env.sh"
-        "post-install/03-snapper.sh"
-        "post-install/04-automate-boot.sh"
+        "post-install/prepare.sh"
+        "post-install/setup-system-snapshot.sh"
+        "post-install/setup-bootloader-automate.sh"
     )
     
     for script in "${scripts[@]}"; do

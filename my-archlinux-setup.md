@@ -773,7 +773,7 @@ pacman -S plymouth
 添加内核参数 `quite splash`，编辑 `/etc/default/limine`（在配置引导条目自动化之后）
 
 ```
-KERNEL_CMDLINE[default]+="splash quiet"
+KERNEL_CMDLINE[default]+="splash quiet"，编辑 `/etc/default/limine`（在配置引导条目自动化之后）
 ```
 
 添加 plymouth 钩子
@@ -970,7 +970,43 @@ systemctl enable --now limine-snapper-sync.service
 > ```
 > sudo limine-mkinitcpio
 > ```
+### 删除 snapper 快照及其配置
 
+snapper 不支持自动一键删除采用按 ArchWiki 推荐布局，设置的快照及其配置。
+
+所以只能删除快照，然后手动删除配置。
+
+删除快照
+
+```
+last_id=$(sudo snapper -c root list | awk 'END{print $1}')
+snapper -c root delete --sync 1-"$last_id"
+```
+
+卸载 `@snapshots`
+
+```
+sudo umount /.snapshots
+```
+
+删除配置
+
+```
+sudo rm /etc/snapper/configs/root
+```
+
+修改 snapper 服务配置，编辑 `/etc/conf.d/snapper`，修改 `SNAPPER_CONFIGS=""`
+
+```
+## Path: System/Snapper
+
+## Type:        string
+## Default:     ""
+# List of snapper configurations.
+SNAPPER_CONFIGS="root"
+```
+
+然后就可以再次创建配置了。
 ### NVIDIA 显卡驱动
 
 #### 确认显卡型号
