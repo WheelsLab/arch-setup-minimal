@@ -13,9 +13,9 @@ log_section "Installing Niri + DMS"
 log_step "Installing Niri WM..."
 if ! check_command niri; then
     if check_command yay; then
-        retry_command 3 yay -S --noconfirm niri
+        retry_command 3 yay -S --noconfirm niri xwayland-satellite
     elif check_command paru; then
-        retry_command 3 paru -S --noconfirm niri
+        retry_command 3 paru -S --noconfirm niri xwayland-satellite
     else
         log_error "No AUR helper (yay/paru) found"
         exit 1
