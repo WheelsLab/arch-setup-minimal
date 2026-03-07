@@ -11,20 +11,22 @@ log_section "Installing Base Packages"
 
 MOUNT_ROOT="/mnt"
 
-log_step "Running pacstrap..."
-retry_command 3 pacstrap -K "$MOUNT_ROOT" \
-    base \
-    linux \
-    linux-firmware \
-    intel-ucode \
-    btrfs-progs \
-    networkmanager \
-    openssh \
-    vim \
-    man-db \
-    man-pages \
-    texinfo \
-    git
+set_phase "安装系统"
+
+run_live_summary "Running pacstrap" \
+    retry_command 3 pacstrap -K "$MOUNT_ROOT" \
+        base \
+        linux \
+        linux-firmware \
+        intel-ucode \
+        btrfs-progs \
+        networkmanager \
+        openssh \
+        vim \
+        man-db \
+        man-pages \
+        texinfo \
+        git
 
 log_step "Enabling SSH..."
 arch-chroot "$MOUNT_ROOT" systemctl enable sshd
@@ -38,3 +40,5 @@ log_step "Generating fstab..."
 genfstab -U "$MOUNT_ROOT" > "$MOUNT_ROOT/etc/fstab"
 
 log_success "Base packages installed!"
+
+finish_phase

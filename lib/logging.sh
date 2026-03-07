@@ -3,6 +3,7 @@
 # Logging functions for Arch Linux minimal setup
 
 [[ -z "$COLOR_NC" ]] && source "$(dirname "${BASH_SOURCE[0]}")/constants.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/status-bar.sh"
 
 LOG_FILE="${LOG_FILE:-/tmp/setup.log}"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"

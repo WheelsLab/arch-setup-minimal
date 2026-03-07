@@ -29,11 +29,10 @@ SYSTEM_PART="${DISK}p2"
 [[ ! -b "${DISK}p2" ]] && SYSTEM_PART="${DISK}2"
 CRYPT_NAME="cryptsystem"
 
-log_step "Installing Limine and efibootmgr..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr || {
-    log_error "Failed to install limine. Check network connection."
-    exit 1
-}
+set_phase "Bootloader"
+
+run_live_summary "Installing Limine and efibootmgr" \
+    arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm limine efibootmgr
 
 log_step "Deploying Limine UEFI..."
 EFI_DIR="$MOUNT_ROOT/boot/EFI/arch-limine"
@@ -45,8 +44,7 @@ sed -i 's/^HOOKS=(.*)/HOOKS=(base systemd autodetect microcode modconf kms keybo
 
 touch "$MOUNT_ROOT/etc/vconsole.conf"
 
-log_step "Regenerating initramfs..."
-arch-chroot "$MOUNT_ROOT" mkinitcpio -P
+run_live_summary "Regenerating initramfs" arch-chroot "$MOUNT_ROOT" mkinitcpio -P
 
 log_step "Getting LUKS UUID..."
 LUKS_UUID=$(blkid -s UUID -o value "$SYSTEM_PART")
@@ -81,3 +79,5 @@ fi
 
 log_success "Limine bootloader installed!"
 log_info "You can now reboot into your new Arch Linux system"
+
+finish_phase

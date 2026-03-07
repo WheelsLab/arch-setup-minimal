@@ -8,6 +8,8 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 log_section "Bootloader Automation & Plymouth"
 
+set_phase "Bootloader配置"
+
 log_step "Getting root device from mount info..."
 ROOT_DEVICE=$(findmnt -n -o SOURCE -T / | cut -d'[' -f1)
 log_info "Root device: $ROOT_DEVICE"
@@ -49,8 +51,8 @@ fi
 log_info "LUKS UUID: $LUKS_UUID"
 log_info "Crypt name: $CRYPT_NAME"
 
-log_step "Installing limine-mkinitcpio-hook..."
-retry_command 3 paru -S --noconfirm limine-mkinitcpio-hook
+run_live_summary "Installing limine-mkinitcpio-hook" \
+    retry_command 3 paru -S --noconfirm limine-mkinitcpio-hook
 
 log_step "Generating /etc/default/limine from template..."
 
@@ -65,22 +67,20 @@ ROOT_SNAPSHOTS_PATH=/@snapshots
 MAX_SNAPSHOT_ENTRIES=50
 EOF
 
-log_step "Installing limine-snapper-sync..."
-retry_command 3 paru -S --noconfirm limine-snapper-sync
+run_live_summary "Installing limine-snapper-sync" \
+    retry_command 3 paru -S --noconfirm limine-snapper-sync
 
 log_step "Configuring mkinitcpio for sd-btrfs-overlayfs..."
 sudo sed -i '/^HOOKS=/ {
     /sd-btrfs-overlayfs/! s/filesystems/& sd-btrfs-overlayfs/
 }' /etc/mkinitcpio.conf
 
-log_step "Running limine-install..."
-sudo limine-install
+run_live_summary "Running limine-install" sudo limine-install
 
 log_step "Enabling limine-snapper-sync service..."
 sudo systemctl enable --now limine-snapper-sync.service
 
-log_step "Installing plymouth..."
-sudo pacman -S --noconfirm plymouth
+run_live_summary "Installing plymouth" sudo pacman -S --noconfirm plymouth
 
 log_step "Configuring plymouth in limine..."
 if ! grep -q 'splash quiet' /etc/default/limine; then
@@ -96,7 +96,8 @@ sudo sed -i '/^HOOKS=/ {
     s/\(.*sd-encrypt\)/\1 plymouth/
 }' /etc/mkinitcpio.conf
 
-log_step "Regenerating initramfs with plymouth..."
-sudo limine-mkinitcpio
+run_live_summary "Regenerating initramfs with plymouth" sudo limine-mkinitcpio
 
 log_success "Bootloader automation and Plymouth configured!"
+
+finish_phase

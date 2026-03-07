@@ -171,6 +171,8 @@ echo "$LUKS_PASSWORD" > /tmp/install-luks-pass
 
 log_section "Configuring"
 
+set_phase "磁盘分区"
+
 log_step "Checking for existing mounts..."
 if mountpoint -q /mnt 2>/dev/null; then
     log_warn "Unmounting existing mounts on /mnt..."
@@ -189,13 +191,13 @@ ESP_SIZE="8GiB"
 CRYPT_NAME="cryptsystem"
 MOUNT_ROOT="/mnt"
 
-log_step "Wiping disk..."
-parted -s "$DISK" mklabel gpt
+run_live_summary "Wiping disk" parted -s "$DISK" mklabel gpt
 
-log_step "Creating GPT partitions..."
-parted -s "$DISK" mkpart ESP fat32 1MiB "$ESP_SIZE"
-parted -s "$DISK" set 1 esp on
-parted -s "$DISK" mkpart crypt "$ESP_SIZE" 100%
+run_live_summary "Creating GPT partitions" \
+    parted -s "$DISK" mkpart ESP fat32 1MiB "$ESP_SIZE" \
+    parted -s "$DISK" set 1 esp on \
+    parted -s "$DISK" mkpart crypt "$ESP_SIZE" 100%
+
 partprobe "$DISK"
 
 ESP_PART="${DISK}p1"
@@ -205,18 +207,15 @@ SYSTEM_PART="${DISK}p2"
 
 log_info "ESP: $ESP_PART, System: $SYSTEM_PART"
 
-log_step "Formatting ESP..."
-mkfs.fat -F32 "$ESP_PART"
+run_live_summary "Formatting ESP" mkfs.fat -F32 "$ESP_PART"
 
-log_step "Setting up LUKS..."
-echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat "$SYSTEM_PART" -
-echo -n "$LUKS_PASSWORD" | cryptsetup open "$SYSTEM_PART" "$CRYPT_NAME" -
+run_live_summary "Setting up LUKS" \
+    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat "$SYSTEM_PART" - \
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "$SYSTEM_PART" "$CRYPT_NAME" -
 
-log_step "Creating Btrfs filesystem..."
-mkfs.btrfs "/dev/mapper/$CRYPT_NAME"
+run_live_summary "Creating Btrfs filesystem" mkfs.btrfs "/dev/mapper/$CRYPT_NAME"
 
-log_step "Mounting top-level Btrfs..."
-mount "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
+run_live_summary "Mounting top-level Btrfs" mount "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
 
 log_step "Creating subvolumes..."
 btrfs subvolume create "$MOUNT_ROOT/@"
@@ -234,8 +233,7 @@ btrfs subvolume create "$MOUNT_ROOT/@container"
 btrfs subvolume create "$MOUNT_ROOT/@container/@docker"
 btrfs subvolume create "$MOUNT_ROOT/@container/@podman"
 
-log_step "Unmounting top-level..."
-umount "$MOUNT_ROOT"
+run_live_summary "Unmounting top-level" umount "$MOUNT_ROOT"
 
 log_step "Mounting subvolumes..."
 mount -o subvol=@,compress=zstd,noatime "/dev/mapper/$CRYPT_NAME" "$MOUNT_ROOT"
@@ -260,8 +258,7 @@ for dir in "$MOUNT_ROOT/mnt/games" \
     chattr +C "$dir" 2>/dev/null || log_warn "Cannot disable CoW on $dir"
 done
 
-log_step "Mounting ESP..."
-mount "$ESP_PART" "$MOUNT_ROOT/boot"
+run_live_summary "Mounting ESP" mount "$ESP_PART" "$MOUNT_ROOT/boot"
 
 log_success "Disk setup completed!"
 log_info "Root: $MOUNT_ROOT, Boot: $MOUNT_ROOT/boot"
@@ -269,3 +266,5 @@ log_info "LUKS container: $CRYPT_NAME"
 
 LUKS_UUID=$(blkid -s UUID -o value "$SYSTEM_PART")
 log_info "LUKS UUID: $LUKS_UUID"
+
+finish_phase

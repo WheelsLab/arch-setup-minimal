@@ -111,6 +111,8 @@ sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' "$MOUNT_ROOT/et
 log_step "Setting user password..."
 echo "$USERNAME:$USER_PASS" | arch-chroot "$MOUNT_ROOT" chpasswd
 
+set_phase "配置系统"
+
 log_step "Setting up archlinuxcn repository..."
 if ! grep -q '\[archlinuxcn\]' /etc/pacman.conf; then
 cat >> "$MOUNT_ROOT/etc/pacman.conf" <<'EOF'
@@ -120,19 +122,15 @@ Server = https://repo.archlinuxcn.org/$arch
 EOF
 fi
 
-log_step "Installing archlinuxcn-keyring..."
-arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring || {
-    log_error "Failed to install archlinuxcn-keyring"
-    exit 1
-}
+run_live_summary "Installing archlinuxcn-keyring" \
+    arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring
 
-log_step "Installing archlinuxcn-mirrorlist-git..."
-arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git || {
-    log_error "Failed to install archlinuxcn-mirrorlist-git"
-    exit 1
-}
+run_live_summary "Installing archlinuxcn-mirrorlist-git" \
+    arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git
 
 log_step "Updating pacman.conf with mirrorlist..."
 sed -i '/\[archlinuxcn\]/a Include = /etc/pacman.d/archlinuxcn-mirrorlist' "$MOUNT_ROOT/etc/pacman.conf"
 
 log_success "Base system configured!"
+
+finish_phase
