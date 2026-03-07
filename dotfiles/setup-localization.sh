@@ -44,9 +44,9 @@ retry_command 3 sudo pacman -S --noconfirm noto-fonts noto-fonts-cjk noto-fonts-
 
 log_step "Installing programming fonts..."
 if check_command yay; then
-    retry_command 3 yay -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm-nerd ttf-sarasa-gothic-nerd-fonts
+    retry_command 3 yay -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm-nerd
 elif check_command paru; then
-    retry_command 3 paru -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm-nerd ttf-sarasa-gothic-nerd-fonts
+    retry_command 3 paru -S --noconfirm ttf-maplemono-nf-cn-unhinted ttf-iosevkaterm-nerd
 else
     log_error "No AUR helper (yay/paru) found"
     exit 1

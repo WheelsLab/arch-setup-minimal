@@ -8,15 +8,17 @@ krdc
 # ===== Fonts =====
 ttf-lxgw-wenkai
 ttf-lxgw-wenkai-nerd   # AUR
+ttf-sarasa-gothic-nerd-fonts
 
 # ===== Browsers =====
 firefox
 google-chrome   # AUR
 
 
-==== Terminal ===
+# ==== Terminal ===
 alacritty
 fish
+zoxide
 fzf
 starship
 tmux
