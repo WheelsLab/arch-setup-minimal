@@ -14,32 +14,44 @@ retry_command 3 sudo pacman -S --noconfirm snapper
 log_step "Cleaning up existing snapper configuration..."
 config="root"
 
+log_step "Cleaning snapper environment"
+
+# remove snapshots
 if sudo snapper list-configs | awk '{print $1}' | grep -qx "$config"; then
-    log_info "Snapper config exists, cleaning up..."
-    
+    log_info "Snapper config exists, deleting snapshots..."
+
     ids=$(sudo snapper -c "$config" list | awk 'NR>2 {print $1}' | grep -v '^0$' || true)
-    
+
     if [[ -n "$ids" ]]; then
-        count=$(echo "$ids" | wc -l)
-        log_info "Deleting $count snapshots..."
-        last_id=$(echo "$ids" | tail -n1)
-        sudo snapper -c "$config" delete --sync 1-"$last_id" || true
+        log_info "Deleting snapshots..."
+        sudo snapper -c "$config" delete --sync $ids || true
     fi
-    
-    log_info "Removing snapper config file..."
+
+    log_info "Removing snapper config"
     sudo rm -f "/etc/snapper/configs/$config"
-    
+
     if [[ -f /etc/conf.d/snapper ]]; then
-        log_info "Clearing SNAPPER_CONFIGS in /etc/conf.d/snapper..."
         sudo sed -i 's/^SNAPPER_CONFIGS=.*/SNAPPER_CONFIGS=""/' /etc/conf.d/snapper
     fi
-    
-    log_info "Snapper cleanup complete"
 fi
 
-log_step "Unmounting /.snapshots if mounted..."
+
+log_step "Unmounting /.snapshots"
+
 if mountpoint -q /.snapshots 2>/dev/null; then
-    sudo umount /.snapshots
+    sudo umount /.snapshots || {
+        log_error "Failed to umount /.snapshots"
+        exit 1
+    }
+fi
+
+
+log_step "Removing /.snapshots"
+
+if btrfs subvolume show /.snapshots &>/dev/null; then
+    sudo btrfs subvolume delete /.snapshots
+elif [[ -d /.snapshots ]]; then
+    sudo rmdir /.snapshots
 fi
 
 log_step "Creating snapper configuration for root..."
