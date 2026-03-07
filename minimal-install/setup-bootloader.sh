@@ -67,17 +67,26 @@ log_info "Limine config written: $MOUNT_ROOT/boot/limine.conf"
 
 log_step "Creating UEFI boot entry..."
 
-if ! arch-chroot "$MOUNT_ROOT" efibootmgr | grep -q "Arch Linux Limine Boot Loader"; then
-    arch-chroot "$MOUNT_ROOT" efibootmgr \
-        --create \
-        --disk "$DISK" \
-        --part 1 \
-        --label "Arch Linux Limine Boot Loader" \
-        --loader '\EFI\arch-limine\BOOTX64.EFI' \
-        --unicode
-else
-    log_info "UEFI boot entry already exists, skipping"
+BOOT_LABEL="Arch Linux Limine Boot Loader"
+
+# 查找已有 entry
+entries=$(arch-chroot "$MOUNT_ROOT" efibootmgr | grep "$BOOT_LABEL" | awk '{print $1}' | sed 's/Boot//;s/\*//')
+
+if [[ -n "$entries" ]]; then
+    for num in $entries; do
+        log_info "Removing existing boot entry Boot$num"
+        arch-chroot "$MOUNT_ROOT" efibootmgr -b "$num" -B
+    done
 fi
+
+log_info "Creating new boot entry"
+arch-chroot "$MOUNT_ROOT" efibootmgr \
+    --create \
+    --disk "$DISK" \
+    --part 1 \
+    --label "$BOOT_LABEL" \
+    --loader '\EFI\arch-limine\BOOTX64.EFI' \
+    --unicode
 
 log_success "Limine bootloader installed!"
 log_info "You can now reboot into your new Arch Linux system"
