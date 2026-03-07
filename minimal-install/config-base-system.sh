@@ -100,7 +100,7 @@ else
 fi
 
 log_step "Installing sudo..."
-arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo || {
+retry_command 3 arch-chroot "$MOUNT_ROOT" pacman -S --noconfirm sudo || {
     log_error "Failed to install sudo"
     exit 1
 }
@@ -121,13 +121,13 @@ EOF
 fi
 
 log_step "Installing archlinuxcn-keyring..."
-arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring || {
+retry_command 3 arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring || {
     log_error "Failed to install archlinuxcn-keyring"
     exit 1
 }
 
 log_step "Installing archlinuxcn-mirrorlist-git..."
-arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git || {
+retry_command 3 arch-chroot "$MOUNT_ROOT" pacman -Su --noconfirm archlinuxcn-mirrorlist-git || {
     log_error "Failed to install archlinuxcn-mirrorlist-git"
     exit 1
 }
