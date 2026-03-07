@@ -13,7 +13,7 @@ log_section "Installing Desktop Applications"
 install_from_pkglist() {
     local pkglist_file="$1"
     local aur_helper=""
-    
+
     if check_command yay; then
         aur_helper="yay"
     elif check_command paru; then
@@ -22,35 +22,27 @@ install_from_pkglist() {
         log_error "No AUR helper (yay/paru) found"
         exit 1
     fi
-    
+
     if [[ ! -f "$pkglist_file" ]]; then
         log_warn "pkglist file not found: $pkglist_file"
         return
     fi
-    
-    local official_packages=()
-    local aur_packages=()
-    
+
+    local packages=()
+
     while IFS= read -r line; do
         [[ -z "$line" || "$line" =~ ^# ]] && continue
-        
-        if [[ "$line" =~ \#\ AUR$ ]]; then
-            local pkg="${line%%\# AUR}"
-            pkg="${pkg%"${pkg##*[![:space:]]}"}"
-            [[ -n "$pkg" ]] && aur_packages+=("$pkg")
-        else
-            official_packages+=("$line")
-        fi
+
+        # 去掉行尾注释
+        line="${line%%#*}"
+        line="${line%"${line##*[![:space:]]}"}"
+
+        [[ -n "$line" ]] && packages+=("$line")
     done < "$pkglist_file"
-    
-    if [[ ${#official_packages[@]} -gt 0 ]]; then
-        log_step "Installing official packages from $(basename "$pkglist_file")..."
-        retry_command 3 sudo pacman -S --noconfirm "${official_packages[@]}"
-    fi
-    
-    if [[ ${#aur_packages[@]} -gt 0 ]]; then
-        log_step "Installing AUR packages from $(basename "$pkglist_file")..."
-        retry_command 3 "$aur_helper" -S --noconfirm "${aur_packages[@]}"
+
+    if [[ ${#packages[@]} -gt 0 ]]; then
+        log_step "Installing packages from $(basename "$pkglist_file")..."
+        retry_command 3 "$aur_helper" -S --noconfirm --needed "${packages[@]}"
     fi
 }
 
