@@ -55,8 +55,8 @@ log_step "Synchronizing hardware clock..."
 arch-chroot "$MOUNT_ROOT" hwclock --systohc
 
 log_step "Configuring locale..."
-echo "en_US.UTF-8 UTF-8" >> "$MOUNT_ROOT/etc/locale.gen"
-echo "zh_CN.UTF-8 UTF-8" >> "$MOUNT_ROOT/etc/locale.gen"
+sed -i '/^#en_US.UTF-8 UTF-8/s/^#//' "$MOUNT_ROOT/etc/locale.gen"
+sed -i '/^#zh_CN.UTF-8 UTF-8/s/^#//' "$MOUNT_ROOT/etc/locale.gen"
 arch-chroot "$MOUNT_ROOT" locale-gen
 
 log_step "Setting locale.conf..."
@@ -112,11 +112,13 @@ log_step "Setting user password..."
 echo "$USERNAME:$USER_PASS" | arch-chroot "$MOUNT_ROOT" chpasswd
 
 log_step "Setting up archlinuxcn repository..."
+if ! grep -q '\[archlinuxcn\]' /etc/pacman.conf; then
 cat >> "$MOUNT_ROOT/etc/pacman.conf" <<'EOF'
 
 [archlinuxcn]
 Server = https://repo.archlinuxcn.org/$arch
 EOF
+fi
 
 log_step "Installing archlinuxcn-keyring..."
 arch-chroot "$MOUNT_ROOT" pacman -Sy --noconfirm archlinuxcn-keyring || {

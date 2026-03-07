@@ -63,21 +63,21 @@ timeout: 5
     module_path: boot():/initramfs-linux.img
 EOF
 
-if [[ -f "$MOUNT_ROOT/boot/limine.conf" ]]; then
-    log_info "Limine config created: $MOUNT_ROOT/boot/limine.conf"
-else
-    log_error "Failed to create limine.conf"
-    exit 1
-fi
+log_info "Limine config written: $MOUNT_ROOT/boot/limine.conf"
 
 log_step "Creating UEFI boot entry..."
-arch-chroot "$MOUNT_ROOT" efibootmgr \
-    --create \
-    --disk "$DISK" \
-    --part 1 \
-    --label "Arch Linux Limine Boot Loader" \
-    --loader '\EFI\arch-limine\BOOTX64.EFI' \
-    --unicode
+
+if ! arch-chroot "$MOUNT_ROOT" efibootmgr | grep -q "Arch Linux Limine Boot Loader"; then
+    arch-chroot "$MOUNT_ROOT" efibootmgr \
+        --create \
+        --disk "$DISK" \
+        --part 1 \
+        --label "Arch Linux Limine Boot Loader" \
+        --loader '\EFI\arch-limine\BOOTX64.EFI' \
+        --unicode
+else
+    log_info "UEFI boot entry already exists, skipping"
+fi
 
 log_success "Limine bootloader installed!"
 log_info "You can now reboot into your new Arch Linux system"

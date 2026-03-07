@@ -52,12 +52,11 @@ log_info "Crypt name: $CRYPT_NAME"
 log_step "Installing limine-mkinitcpio-hook..."
 retry_command 3 paru -S --noconfirm limine-mkinitcpio-hook
 
-log_step "Configuring limine..."
-if [[ ! -f /etc/default/limine ]]; then
-    sudo cp /etc/limine-entry-tool.conf /etc/default/limine
-fi
+log_step "Generating /etc/default/limine from template..."
 
-log_step "Updating limine configuration..."
+sudo install -m 644 /etc/limine-entry-tool.conf /etc/default/limine
+
+log_step "Applying custom limine settings..."
 sudo tee -a /etc/default/limine > /dev/null <<EOF
 KERNEL_CMDLINE[default]=rd.luks.name=${LUKS_UUID}=${CRYPT_NAME} root=/dev/mapper/${CRYPT_NAME} rootflags=subvol=@ rootfstype=btrfs rw
 TIMEOUT=5
@@ -71,10 +70,8 @@ retry_command 3 paru -S --noconfirm limine-snapper-sync
 
 log_step "Configuring mkinitcpio for sd-btrfs-overlayfs..."
 sudo sed -i '/^HOOKS=/ {
-     s/\(filesystems\)\(.*sd-btrfs-overlayfs\)/\1 sd-btrfs-overlayfs/
-     t
-     s/\(filesystems\)/\1 sd-btrfs-overlayfs/
- }' /etc/mkinitcpio.conf
+    /sd-btrfs-overlayfs/! s/filesystems/& sd-btrfs-overlayfs/
+}' /etc/mkinitcpio.conf
 
 log_step "Running limine-install..."
 sudo limine-install

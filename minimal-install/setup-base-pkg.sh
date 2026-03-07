@@ -35,6 +35,6 @@ sed -i 's/^#Server/Server/' /tmp/mirrorlist
 cp /tmp/mirrorlist "$MOUNT_ROOT/etc/pacman.d/mirrorlist"
 
 log_step "Generating fstab..."
-genfstab -U "$MOUNT_ROOT" >> "$MOUNT_ROOT/etc/fstab"
+genfstab -U "$MOUNT_ROOT" > "$MOUNT_ROOT/etc/fstab"
 
 log_success "Base packages installed!"
