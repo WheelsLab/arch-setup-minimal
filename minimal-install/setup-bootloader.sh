@@ -70,17 +70,17 @@ log_step "Creating UEFI boot entry..."
 BOOT_LABEL="Arch Linux Limine Boot Loader"
 
 # 查找已有 entry
-entries=$(arch-chroot "$MOUNT_ROOT" efibootmgr | grep "$BOOT_LABEL" | awk '{print $1}' | sed 's/Boot//;s/\*//')
+entries=$(efibootmgr | grep "$BOOT_LABEL" | awk '{print $1}' | sed 's/Boot//;s/\*//')
 
 if [[ -n "$entries" ]]; then
     for num in $entries; do
         log_info "Removing existing boot entry Boot$num"
-        arch-chroot "$MOUNT_ROOT" efibootmgr -b "$num" -B
+        efibootmgr -b "$num" -B
     done
 fi
 
 log_info "Creating new boot entry"
-arch-chroot "$MOUNT_ROOT" efibootmgr \
+efibootmgr \
     --create \
     --disk "$DISK" \
     --part 1 \
