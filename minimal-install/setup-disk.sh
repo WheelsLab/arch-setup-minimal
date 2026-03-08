@@ -155,12 +155,21 @@ fi
 
 echo ""
 log_warn "About to WIPE and REPARTITION $DISK!"
+lsblk -o NAME,SIZE,TYPE,PTTYPE,FSTYPE,MOUNTPOINT "$DISK"
 printf "${COLOR_ORANGE}Type 'YES' to confirm: ${COLOR_NC}"
-read CONFIRM
-if [[ "$CONFIRM" != "YES" ]]; then
-    log_error "Aborted"
-    exit 1
-fi
+
+while true; do
+    read -r CONFIRM
+    
+    if [[ "$CONFIRM" == "YES" ]]; then
+        break
+    elif [[ "$CONFIRM" == "NO" ]]; then
+        log_error "Aborted"
+        exit 1
+    else
+        log_warn "Enter YES in uppercase to confirm, or NO to abort install!!!"
+    fi
+done
 
 echo "$DISK" > /tmp/install-disk
 echo "$HOSTNAME" > /tmp/install-hostname
