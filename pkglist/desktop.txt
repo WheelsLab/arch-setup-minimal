@@ -13,21 +13,3 @@ ttf-sarasa-gothic-nerd-fonts
 # ===== Browsers =====
 firefox
 google-chrome   # AUR
-
-
-# ==== Terminal ===
-alacritty
-fish
-zoxide
-fzf
-starship
-tmux
-tmux-plugin-manager
-lsd
-duf
-dust
-tealdeer
-yazi
-ncdu
-github-cli
-lazygit

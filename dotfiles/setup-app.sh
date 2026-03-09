@@ -46,10 +46,17 @@ install_from_pkglist() {
     fi
 }
 
-log_step "Installing desktop applications..."
-install_from_pkglist "$SCRIPT_DIR/../pkglist/desktop.txt"
+log_step "Installing terminal tools..."
+install_from_pkglist "$SCRIPT_DIR/../pkglist/terminal-tools.txt"
 
-log_step "Installing development and embedded tools..."
-install_from_pkglist "$SCRIPT_DIR/../pkglist/dev-embedded.txt"
+if confirm "Install desktop app?" y; then
+    log_step "Installing desktop applications..."
+    install_from_pkglist "$SCRIPT_DIR/../pkglist/desktop.txt"
+fi
+
+if confirm "Install embedded dev tools?" y; then
+    log_step "Installing development and embedded tools..."
+    install_from_pkglist "$SCRIPT_DIR/../pkglist/dev-embedded.txt"
+fi
 
 log_success "Application installation completed!"

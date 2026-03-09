@@ -1,0 +1,16 @@
+# ==== Terminal ===
+alacritty
+fish
+zoxide
+fzf
+starship
+tmux
+tmux-plugin-manager
+lsd
+duf
+dust
+tealdeer
+yazi
+ncdu
+github-cli
+lazygit
